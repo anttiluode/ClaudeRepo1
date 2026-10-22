@@ -1,0 +1,28 @@
+{
+  "fresh": {
+    "rectified": {
+      "phase": 0.9984,
+      "marginal": 0.7843,
+      "shuffle": 0.6753
+    },
+    "marginal": {
+      "phase": 1.0,
+      "marginal": 0.5614,
+      "shuffle": 0.6146
+    }
+  },
+  "reused_gateA_test": {
+    "rectified": {
+      "phase": 0.9986666666666667,
+      "marginal": 0.9364,
+      "shuffle": 0.7525777777777778
+    },
+    "marginal": {
+      "phase": 1.0,
+      "marginal": 0.5747555555555556,
+      "shuffle": 0.6795555555555556
+    }
+  },
+  "n_fresh": 100,
+  "A2b_PASS": true
+}

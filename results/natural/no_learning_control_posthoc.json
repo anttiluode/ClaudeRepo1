@@ -1,0 +1,21 @@
+{
+  "learned": {
+    "phase": 0.9984,
+    "marginal": 0.7843,
+    "shuffle": 0.6753
+  },
+  "all_ones_no_learning": {
+    "phase": 0.9982,
+    "marginal": 0.7926,
+    "shuffle": 0.7074
+  },
+  "learned_shuffled": {
+    "phase": 0.9977,
+    "marginal": 0.7919,
+    "shuffle": 0.704
+  },
+  "W_min_max": [
+    0.009356527898852334,
+    0.8657997410015302
+  ]
+}
