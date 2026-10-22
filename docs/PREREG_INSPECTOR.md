@@ -40,6 +40,27 @@ for logical anomalies with EfficientAD plus a global Mahalanobis term. Passing t
 the inspector worth developing; it would not by itself make it competitive with these methods, and the
 write-up must say where it stands against them.
 
+## Changes made before the first LOCO run (from the synthetic smoke test, 22 October)
+
+Recorded here because they were made after this file was first pushed (c7c8c86); all were made on
+`inspector/make_synthetic.py` data only, before any LOCO image was seen.
+
+1. **No arithmetic relations.** Within one region the K type areas sum to 1, so an area may not be
+   predicted from other areas in its own region. The first smoke run's top 'relations' were all of this kind.
+2. **Surprise = distance to the closest allowed value**, not to the neighbours' mean. A branch now asks
+   whether any of the 10 good images most similar in its predictors has a target value near the observed
+   one. Where good images allow two values, their average is neither, and scoring against it made good
+   images look anomalous.
+3. **Conservative error scale.** Each branch's scale is the larger of its held-out (calibration-half)
+   value and its leave-one-out value over all training images, floor 0.25.
+4. **Combination stays the sum** of the two standardised scores (max was also tried on the toy and kept
+   structure worse: 0.91 against 0.94).
+
+Smoke result (synthetic tray, colour-statistic features via `--pixels`, not evidence about LOCO; receipt
+in `results/inspector_smoke/tray_pixels.json`): logical AUROC PatchCore 0.48, relations 0.85, sum 0.84;
+structural PatchCore 0.995, sum 0.94 (that would fail L2 on structure); explanations overlap the truth
+0.60 vs 0.30 for a random variable. The gates above are unchanged.
+
 ## What the inspector does not claim
 
 Part types are k-means clusters, not named objects; a person reads them from example patches. Branch

@@ -17,7 +17,7 @@ import torch.nn.functional as F
 from sklearn.metrics import roc_auc_score
 
 from . import data
-from .patchcore import Backbone, PatchCore, extract
+from .patchcore import Backbone, PatchCore, PixelBackbone, extract
 from .relations import Relations
 
 
@@ -57,7 +57,12 @@ def run_category(args, backbone, cat):
 
     std = lambda s, ref: (s - ref.mean()) / max(ref.std(), 1e-6)
     z_pc, z_rel = std(pc_test, pc_val), std(rel_test, rel_val)
-    combined = z_pc + z_rel
+    combined = np.maximum(z_pc, z_rel) if args.combine == "max" else z_pc + z_rel
+    np.savetxt(Path(args.out) / f"{cat}_scores.csv",
+               np.c_[np.arange(len(paths)), z_pc, z_rel], delimiter=",", fmt="%.5f",
+               header="index,patchcore_z,relation_z  (" + ";".join(f"{k}/{p.name}" for k, p in zip(kinds, paths)) + ")")
+    kinds_path = Path(args.out) / f"{cat}_kinds.txt"
+    kinds_path.write_text("\n".join(kinds))
     res = {"category": cat, "n_train": len(train), "n_val": len(val),
            "n_test": {k: int((kinds == k).sum()) for k in data.KINDS},
            "relations": {"part_types": args.K, "variables_live": rel.n_live, "candidates_found": rel.n_candidates, "branches_kept": len(rel.branches),
@@ -98,13 +103,16 @@ def main():
     ap.add_argument("--coreset", type=float, default=0.1)
     ap.add_argument("--K", type=int, default=12)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--combine", choices=["max", "sum"], default="sum",
+                    help="how the standardised PatchCore and relation scores are combined")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     ap.add_argument("--no-pretrained", action="store_true", help="random backbone (smoke tests only)")
+    ap.add_argument("--pixels", action="store_true", help="colour statistics instead of a CNN (smoke tests only)")
     ap.add_argument("--limit", type=int, default=0, help="cap training images (smoke tests only)")
     args = ap.parse_args()
     cats = data.CATEGORIES if args.categories == "all" else args.categories.split(",")
     torch.manual_seed(args.seed)
-    backbone = Backbone(args.device, pretrained=not args.no_pretrained)
+    backbone = PixelBackbone() if args.pixels else Backbone(args.device, pretrained=not args.no_pretrained)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     results = []

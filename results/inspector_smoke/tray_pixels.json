@@ -1,0 +1,146 @@
+{
+ "category": "tray",
+ "n_train": 80,
+ "n_val": 30,
+ "n_test": {
+  "good": 30,
+  "logical_anomalies": 30,
+  "structural_anomalies": 20
+ },
+ "relations": {
+  "part_types": 12,
+  "variables_live": 85,
+  "candidates_found": 65,
+  "branches_kept": 45,
+  "top_branches": [
+   "R2 1.00: part type 6 in the left  ->  number of type 2 pieces",
+   "R2 1.00: part type 8 in the right  ->  number of type 8 pieces",
+   "R2 0.98: part type 4 in the centre  ->  part type 2 in the left",
+   "R2 0.98: number of type 8 pieces  ->  part type 8 in the right",
+   "R2 0.97: part type 11 in the left + number of type 11 pieces  ->  part type 11 in the right",
+   "R2 0.97: part type 8 in the centre + part type 8 in the right  ->  part type 8 in the bottom-right",
+   "R2 0.96: part type 0 in the bottom-right + part type 2 in the left  ->  part type 2 in the centre",
+   "R2 0.96: part type 0 in the right + part type 3 in the bottom-right  ->  part type 3 in the bottom",
+   "R2 0.96: part type 5 in the centre  ->  part type 2 in the right",
+   "R2 0.96: part type 5 in the bottom-left + part type 8 in the centre  ->  part type 5 in the left",
+   "R2 0.94: part type 11 in the left + part type 11 in the right  ->  number of type 11 pieces",
+   "R2 0.93: part type 2 in the centre + part type 2 in the bottom-right  ->  part type 2 in the bottom",
+   "R2 0.92: part type 5 in the bottom-right + part type 8 in the right  ->  part type 8 in the centre",
+   "R2 0.91: number of type 2 pieces + part type 5 in the bottom-right  ->  part type 8 in the centre",
+   "R2 0.90: part type 0 in the top + part type 9 in the top-left  ->  number of type 9 pieces"
+  ]
+ },
+ "auroc": {
+  "patchcore": {
+   "logical_anomalies": 0.4788888888888889,
+   "structural_anomalies": 0.995,
+   "all": 0.6853333333333333
+  },
+  "relations": {
+   "logical_anomalies": 0.8511111111111112,
+   "structural_anomalies": 0.5958333333333333,
+   "all": 0.749
+  },
+  "combined": {
+   "logical_anomalies": 0.8477777777777779,
+   "structural_anomalies": 0.9083333333333334,
+   "all": 0.8720000000000001
+  }
+ },
+ "seconds": {
+  "features": 0.7,
+  "patchcore": 415.1,
+  "relations": 8.4
+ },
+ "explanation": {
+  "logical_with_masks": 30,
+  "flagged_location_overlaps_truth": 0.6,
+  "random_variable_overlaps_truth": 0.3
+ },
+ "most_anomalous": [
+  {
+   "image": "structural_anomalies/008.png",
+   "combined_z": 24.83,
+   "patchcore_z": 24.83,
+   "relation_z": 10.7,
+   "explanation": "given part type 6 in the bottom-left = 0.00: part type 4 in the left should be about 0.00, it is 0.05"
+  },
+  {
+   "image": "structural_anomalies/017.png",
+   "combined_z": 20.07,
+   "patchcore_z": 20.07,
+   "relation_z": -1.36,
+   "explanation": "number of type 7 pieces is 5.00; in good images it is 3.41 \u00b1 0.56"
+  },
+  {
+   "image": "structural_anomalies/006.png",
+   "combined_z": 19.69,
+   "patchcore_z": 19.69,
+   "relation_z": -0.74,
+   "explanation": "part type 11 in the right is 0.33; in good images it is 0.05 \u00b1 0.11"
+  },
+  {
+   "image": "structural_anomalies/013.png",
+   "combined_z": 18.86,
+   "patchcore_z": 18.86,
+   "relation_z": -1.0,
+   "explanation": "part type 5 in the left is 0.08; in good images it is 0.02 \u00b1 0.02"
+  },
+  {
+   "image": "structural_anomalies/016.png",
+   "combined_z": 18.04,
+   "patchcore_z": 18.04,
+   "relation_z": 4.38,
+   "explanation": "given part type 0 in the centre = 0.50, part type 0 in the bottom-right = 0.58: part type 0 in the bottom should be about 0.63, it is 0.56"
+  },
+  {
+   "image": "structural_anomalies/011.png",
+   "combined_z": 16.7,
+   "patchcore_z": 16.7,
+   "relation_z": -1.95,
+   "explanation": "given part type 0 in the right = 0.39, number of type 8 pieces = 6.00: part type 8 in the bottom should be about 0.08, it is 0.07"
+  },
+  {
+   "image": "structural_anomalies/003.png",
+   "combined_z": 15.54,
+   "patchcore_z": 15.54,
+   "relation_z": 0.64,
+   "explanation": "given part type 5 in the left = 0.01: part type 5 in the bottom-left should be about 0.00, it is 0.02"
+  },
+  {
+   "image": "logical_anomalies/018.png",
+   "combined_z": 15.43,
+   "patchcore_z": -0.82,
+   "relation_z": 15.43,
+   "explanation": "given number of type 4 pieces = 2.00, number of type 8 pieces = 4.00: part type 5 in the left should be about 0.00, it is 0.07"
+  },
+  {
+   "image": "structural_anomalies/002.png",
+   "combined_z": 13.93,
+   "patchcore_z": 13.93,
+   "relation_z": -0.41,
+   "explanation": "given number of type 2 pieces = 2.00, part type 5 in the bottom-right = 0.00: part type 8 in the centre should be about 0.17, it is 0.11"
+  },
+  {
+   "image": "structural_anomalies/000.png",
+   "combined_z": 13.56,
+   "patchcore_z": 13.56,
+   "relation_z": 2.61,
+   "explanation": "given part type 0 in the bottom-right = 0.60: part type 0 in the right should be about 0.39, it is 0.31"
+  },
+  {
+   "image": "good/012.png",
+   "combined_z": 11.86,
+   "patchcore_z": -0.69,
+   "relation_z": 11.86,
+   "explanation": "given part type 5 in the centre = 0.00: part type 2 in the right should be about 0.00, it is 0.38"
+  },
+  {
+   "image": "good/016.png",
+   "combined_z": 10.7,
+   "patchcore_z": -1.03,
+   "relation_z": 10.7,
+   "explanation": "given part type 4 in the bottom-left = 0.00, part type 11 in the bottom-left = 0.01: part type 4 in the left should be about 0.00, it is 0.05"
+  }
+ ]
+}

@@ -38,6 +38,22 @@ class Backbone:
         return f.float().cpu(), (h, w)
 
 
+class PixelBackbone:
+    """Debugging and smoke tests only: per 8x8 patch, mean and spread of each colour channel. It lets the
+    relation logic be checked where colour is visible without pretrained weights. Not for real results."""
+
+    def __init__(self, cell=8):
+        self.cell = cell
+
+    def __call__(self, images):
+        x = torch.from_numpy(np.ascontiguousarray(images)).permute(0, 3, 1, 2)
+        m = F.avg_pool2d(x, self.cell)
+        sd = (F.avg_pool2d(x * x, self.cell) - m * m).clamp(min=0).sqrt()
+        f = torch.cat([m, sd], 1)
+        B, C, h, w = f.shape
+        return f.permute(0, 2, 3, 1).reshape(B, h * w, C).float(), (h, w)
+
+
 def extract(backbone, paths, size, load, batch=8):
     out, hw = [], None
     for i in range(0, len(paths), batch):

@@ -13,13 +13,16 @@ The world.html mechanism, moved onto real features:
    kept only if it ALSO predicts the variable on held-out good images (the self-test: R^2 >= keep on
    the selection half of validation/good), so a relation found by searching many candidates on the
    same images has to survive images it has never seen.
-4. Scoring. For a new image every kept branch reports how far the observed value lies from its
-   prediction, in units of its own held-out error; every variable also reports how far it lies from
+4. Scoring. For a new image every kept branch asks whether any of the k_score good images most similar
+   in its predictors has a target value close to the observed one (good images may allow several
+   values; their average is not one of them), in units of that distance's usual size on good images; every variable also reports how far it lies from
    its usual range. The image's relation score is the largest of these, and that term is its
    explanation: 'given A and B, C should be about x; it is y'.
 
 Validation images are split: one half selects the branches, the other half sets each branch's error
-scale and the score normalisation, so the scale is not fitted on the images that chose the branch."""
+scale and the score normalisation, so the scale is not fitted on the images that chose the branch. Because
+that half is small, a branch's error scale is the larger of its error there and its leave-one-out error
+over all training images."""
 import numpy as np
 import torch
 from scipy import ndimage
@@ -44,6 +47,18 @@ def kmeans(x, K, iters=30, seed=0, device="cpu"):
     return c
 
 
+def knn_closest(Atr, ytr, Aq, yq, k, exclude_self=False):
+    """For each query: among the k good images most similar in the predictors, how close does any of them
+    come to the query's target value? Small when the value is one the good images allow (even if they
+    allow several), large when no similar good image has it."""
+    d = ((Aq[:, None, :] - Atr[None, :, :]) ** 2).sum(-1)
+    if exclude_self:
+        np.fill_diagonal(d, np.inf)
+    k = min(k, Atr.shape[0] - (1 if exclude_self else 0))
+    idx = np.argpartition(d, k - 1, axis=1)[:, :k]
+    return np.abs(ytr[idx] - yq[:, None]).min(1)
+
+
 def knn_predict(Atr, ytr, Aq, k):
     d = ((Aq[:, None, :] - Atr[None, :, :]) ** 2).sum(-1)
     k = min(k, Atr.shape[0])
@@ -52,9 +67,9 @@ def knn_predict(Atr, ytr, Aq, k):
 
 
 class Relations:
-    def __init__(self, K=12, grid=3, knn=5, keep=0.5, joint_gain=0.2, n_random=3000, min_blob=3,
+    def __init__(self, K=12, grid=3, knn=5, k_score=10, keep=0.5, joint_gain=0.2, n_random=3000, min_blob=3,
                  area_floor=0.02, count_floor=0.5, err_floor=0.25, seed=0, device="cpu"):
-        self.__dict__.update(K=K, grid=grid, knn=knn, keep=keep, joint_gain=joint_gain, n_random=n_random,
+        self.__dict__.update(K=K, grid=grid, knn=knn, k_score=k_score, keep=keep, joint_gain=joint_gain, n_random=n_random,
                              min_blob=min_blob, area_floor=area_floor, count_floor=count_floor,
                              err_floor=err_floor, seed=seed, device=device)
 
@@ -137,9 +152,16 @@ class Relations:
             yhat = Zs[np.argpartition(d, k - 1, axis=1)[:, :k], t].mean(1)
             return 1 - np.mean((Zs[:, t] - yhat) ** 2) / max(np.mean(Zs[:, t] ** 2), 1e-6)
 
+        # Within one region the areas of all K types add up to 1, so predicting one from the others in the
+        # same region is arithmetic, not a relation about the world. Such predictors are not allowed.
+        def allowed(t, j):
+            kt, ct, rt, _ = self.var_info(t)
+            kj, cj, rj, _ = self.var_info(j)
+            return j != t and not (ct == "area" and cj == "area" and rt == rj)
+
         candidates = {}
         for t in live:                                       # greedy: best 1- or 2-variable predictor
-            others = [j for j in live if j != t]
+            others = [j for j in live if allowed(t, j)]
             singles = sorted(((r2_loo(t, [j]), j) for j in others), reverse=True)
             if not singles:
                 continue
@@ -156,7 +178,7 @@ class Relations:
         for _ in range(self.n_random):                       # random triples: joint relations only
             t, j, m = (int(v) for v in rng.choice(live, 3, replace=False))
             S = tuple(sorted((j, m)))
-            if (t, S) in candidates:
+            if (t, S) in candidates or not (allowed(t, j) and allowed(t, m)):
                 continue
             s = r2_loo(t, list(S))
             if s < self.keep:
@@ -172,9 +194,15 @@ class Relations:
             if h >= self.keep:
                 branches[(t, S)] = h
         self.branches = []
+        def scale(t, S):
+            """Typical 'closest allowed value' distance for good images: leave-one-out over training
+            images and held-out on the calibration half; the larger of the two, never below the floor."""
+            loo = knn_closest(self.Ztr[:, S], self.Ztr[:, t], self.Ztr[:, S], self.Ztr[:, t], self.k_score, True)
+            cal = knn_closest(self.Ztr[:, S], self.Ztr[:, t], Zcal[:, S], Zcal[:, t], self.k_score)
+            return max(np.sqrt(np.mean(loo ** 2)), np.sqrt(np.mean(cal ** 2)), self.err_floor)
+
         for (t, S), s in sorted(branches.items(), key=lambda kv: -kv[1]):
-            yhat = knn_predict(self.Ztr[:, list(S)], self.Ztr[:, t], Zcal[:, list(S)], self.knn)
-            err = max(np.sqrt(np.mean((Zcal[:, t] - yhat) ** 2)), self.err_floor)
+            err = scale(t, list(S))
             self.branches.append({"target": int(t), "given": [int(v) for v in S], "r2": float(s), "err": float(err)})
         self.marg_scale = np.maximum(np.sqrt(np.mean(Zcal ** 2, 0)), 1.0)
         return self
@@ -190,7 +218,7 @@ class Relations:
         for b in self.branches:
             S, t = b["given"], b["target"]
             yhat = knn_predict(self.Ztr[:, S], self.Ztr[:, t], Z[:, S], self.knn)
-            z = np.abs(Z[:, t] - yhat) / b["err"]
+            z = knn_closest(self.Ztr[:, S], self.Ztr[:, t], Z[:, S], Z[:, t], self.k_score) / b["err"]
             for n in np.where(z > best)[0]:
                 best[n] = z[n]
                 which[n] = ("relation", b, float(yhat[n]))
