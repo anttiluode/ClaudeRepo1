@@ -95,16 +95,28 @@ scales" property, and must beat an untrained W at doing so.
   internet for the full corrected run.
 * What the experience gate adds: mean-Hebb and all-ones get world A (orientations agree) right and
   world B (orientations oppose) wrong, every time. Generic coherence *is* a prior: "aligned edges go
-  together". Only a rule that subtracts what it would expect anyway (observed minus independently
-  recombined partners) can learn a world that goes against that prior. That is the computational
+  together". In the tested associative implementations, subtracting the independently recombined
+  baseline lets the rule learn against that prior; this is not necessary for all learners (ridge ties it).
+  That is the computational
   shape of Li & DiCarlo's swap experiment: altered experience overriding the default association.
   Ridge ties it, so this shows learned association is *possible* in these features, not that it is better.
+
+## Three-piece follow-up (Astra)
+
+The [preregistered three-piece gate](docs/THREE_PIECE_PROTOCOL.md) passed:
+pairwise Hebb and linear ridge scored 50%; a supplied three-way feature with
+learned weights scored 100% in both opposite worlds. Ridge given a product
+feature also scored 100%. The previous whole-image Sihti descriptor scored
+49.375%. **The useful conjunction was supplied, not discovered.**
+See [the result and limitations](docs/THREE_PIECE_RESULT.md) and
+[the full receipt](results/astra/three_piece.json). Gate B remains unbuilt.
 
 ## Run it
 
 ```bash
 pip install -r requirements.txt pytest
-python -m pytest -q          # 5 tests: lossless sieve, phase scramble keeps every linear relation, ...
+python -m pytest -q          # sieve, controls, source isolation, experience and parity checks
+python three_piece_gate.py   # bounded synthetic three-way relation test; no downloads
 python gate_a.py             # Gate A (about a minute)
 python diagnose_a.py         # post-hoc probe
 python gate_a2b.py           # A2b; gate_a2b.curve_figure() and no_learning_control() for the rest
