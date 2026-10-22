@@ -172,6 +172,33 @@ the scarcity result from the scratch check was not used here. The parts are know
 (Rumelhart & Zipser 1985), Barlow's suspicious coincidences, masked self-prediction, synaptic turnover,
 mixture-model completion.
 
+## The relation inspector (`inspector/`) — leaving the toy world
+
+The same mechanism as `world.html`, moved onto real images and a public benchmark. Industrial inspection's
+strongest simple method, PatchCore, is a memory of good patches: in energy terms, unary terms only. It
+catches scratches and dents but is weak on MVTec LOCO AD's *logical* anomalies, where every part looks
+normal and the combination is wrong (published mean logical AUROC 74.0, against 86–92 for methods built
+for them). The inspector adds learned relations between part types on top of PatchCore:
+
+* **part types**: k-means on the backbone's patch features from good images;
+* **readable variables**: how much of each type lies in each 3×3 region, how many pieces of it there are;
+* **branches**: one variable predicted from one or two others, searched by leave-one-out on good training
+  images and kept only if they also predict held-out good images;
+* **explanations**: the branch that is most surprised names the problem, e.g. *given part type 3 in the
+  left = 0.21: part type 7 in the right should be about 0.18, it is 0.02*.
+
+Gates L1, L2 and E1 are preregistered in [docs/PREREG_INSPECTOR.md](docs/PREREG_INSPECTOR.md), written
+before any LOCO run. To run on a GPU machine with the dataset downloaded from MVTec:
+
+```bash
+pip install torch torchvision scipy scikit-learn pillow
+python -m inspector.run --root /path/to/mvtec_loco            # about 10-20 min on an RTX 3060
+python -m inspector.make_synthetic synth && python -m inspector.run --root synth --categories tray   # smoke test
+```
+
+Results land in `results/inspector/` (per-category JSON with AUROCs, kept relations, and explanations of
+the most anomalous test images, plus `summary.json`).
+
 ## Run it
 
 ```bash
