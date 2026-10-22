@@ -1,5 +1,14 @@
 # ClaudeRepo1 — which configurations across the Sihti bands occur together?
 
+> **Astra branch audit (22 October):** A2b's claim of two fresh source photographs
+> is withdrawn: `cat` aliases the training image `chelsea`. Original receipts below
+> are preserved, not rerun. The histogram/spectrum controls are approximate, not
+> exact; their remaining marginal differences are predictive. See
+> [the bounded audit and experience result](docs/ASTRA_RESULT.md).
+> The new synthetic experience gate passes, **with ordinary ridge tying it**.
+> No persistence network was built.
+
+
 Gate A of the plan from the Oct 22 2026 Antti / Astra / Sol / Claude discussion: before building a
 fast/slow persistence machine (Gate B), check whether a Hebbian relation layer over the Sihti bands
 carries anything a frequency ledger cannot see. Everything was preregistered and pushed before the
@@ -12,7 +21,7 @@ nothing: an untrained all-ones weight vector does as well.
 ## The setup
 
 * **Sieve** (`sieve.py`): linear diffusion on a torus, bands r_k = x_{d_k} − x_{d_{k+1}} at depths
-  0,1,2,4,8,16,32; lossless. On a torus every *linear* relation between bands is fixed by the power spectrum.
+  0,1,2,4,8,16,32; lossless. Here, spatially averaged signed band correlations on a torus are fixed by the power spectrum.
 * **Relation layer** (`relations.py`): per image, standardised activities of each band, either
   rectified |r_k| or signed r_k; the relation tensor R[k,k',δ] = mean_p a_k(p)·a_k'(p+δ) over all band
   pairs and 9 offsets (309 relations). Hebbian learning W ← W + (R − W)/n over natural training crops only.
@@ -20,7 +29,7 @@ nothing: an untrained all-ones weight vector does as well.
   control), `marginal` (Heeger–Bergen: band histograms and spectrum re-imposed alternately),
   `shuffle` (16×16 blocks permuted; seams add new edges, so report-only).
 * Training: 560 crops from 15 scikit-image photographs. Test: 150 crops from `camera`, `coffee`,
-  `clock`; the A2b gate on 100 crops from `cat`, `cell`, never used before.
+  `clock`; the original A2b gate on 100 crops from `cat`, `cell` (source overlap: `cat` is training `chelsea`).
 
 ![learned links](results/natural/learned_links.png)
 
@@ -41,7 +50,7 @@ bands reach further.
 
 ## What happened, honestly
 
-1. **A1 is Freeman's result inside Sihti.** Phase scrambling leaves every band's energy and every
+1. **A1 is an analogous computational statistic, not a replication of V2 physiology.** Phase scrambling leaves every band's energy and every
    signed cross-band correlation identical (a test checks this to 10⁻⁹), and the linear relation
    layer scores exactly chance. The rectified layer sees the difference.
 2. **A2 failed because of the readout, not the features.** The preregistered score was typicality:
@@ -49,10 +58,9 @@ bands reach further.
    while scrambles regress toward the average, so controls scored as *more* natural. A post-hoc
    supervised probe (`diagnose_a.py`) showed the information was there: 0.97 for rectified relations
    vs 0.87 for per-band shape on the matched controls.
-3. **A2b fixed the readout, preregistered and on fresh photographs, and passed.** A Hebbian unit does
+3. **A2b changed the readout and met its numerical threshold, but its fresh-source claim failed the later audit.** A Hebbian unit does
    not measure distance to its weights; it responds with its drive, the overlap of input and weights.
-4. **Then the deflation.** Every learned co-activation is positive (0.009 to 0.87), so the direction
-   of W barely matters. The drive is essentially *how much rectified activity coincides across scale
+4. **Then the deflation.** Every learned co-activation is positive (0.009 to 0.87), so the controls show little benefit from the arrangement of W on this test (positivity alone would not establish that). The drive is essentially *how much rectified activity coincides across scale
    and nearby space*, and that is what tells a photograph from its scrambles: edges line up across
    scales in real images, and in scrambles they do not. That statistic is known (the cross-scale
    magnitude dependencies of Simoncelli and colleagues; the Portilla–Simoncelli texture statistics

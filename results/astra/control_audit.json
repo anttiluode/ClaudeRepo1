@@ -1,0 +1,120 @@
+{
+  "source": "three synthetic fixtures; not the photograph benchmark",
+  "definition": "relative L2 Fourier amplitude and sorted reanalysed coefficients",
+  "rows": [
+    {
+      "phase": {
+        "spectrum_relative_l2": 1.9132000263971414e-16,
+        "band_histogram_relative_l2": [
+          0.8021607348781054,
+          0.6716394455808576,
+          0.4747191989516972,
+          0.3348476908147038,
+          0.2088349925582383,
+          0.1115999265394279
+        ],
+        "core_histogram_relative_l2": 0.08264389761108397
+      },
+      "marginal": {
+        "spectrum_relative_l2": 0.08311158805058112,
+        "band_histogram_relative_l2": [
+          0.2957609412953261,
+          0.33924685403342586,
+          0.29929296543390915,
+          0.23615229406341876,
+          0.17778313450453828,
+          0.13263103930633163
+        ],
+        "core_histogram_relative_l2": 0.03162624751754473
+      },
+      "shuffle": {
+        "spectrum_relative_l2": 0.3826373211971933,
+        "band_histogram_relative_l2": [
+          0.5265983528674568,
+          0.42044636748222,
+          0.4622190979955489,
+          0.39799915931480095,
+          0.36283591999433445,
+          0.3276608010909605
+        ],
+        "core_histogram_relative_l2": 0.06839248886594325
+      }
+    },
+    {
+      "phase": {
+        "spectrum_relative_l2": 1.9148778818371103e-16,
+        "band_histogram_relative_l2": [
+          0.031606538592942456,
+          0.029229687954715724,
+          0.02543224920266556,
+          0.018428174538988797,
+          0.01233679618333471,
+          0.009581982217027999
+        ],
+        "core_histogram_relative_l2": 0.0015948600719187232
+      },
+      "marginal": {
+        "spectrum_relative_l2": 0.001868752320604121,
+        "band_histogram_relative_l2": [
+          0.06787913746595269,
+          0.030107890748619314,
+          0.018023624187856146,
+          0.014559802417110279,
+          0.017126402425700647,
+          0.017777468923899725
+        ],
+        "core_histogram_relative_l2": 0.0022618297962558173
+      },
+      "shuffle": {
+        "spectrum_relative_l2": 0.18903658446348384,
+        "band_histogram_relative_l2": [
+          5.378478210990924,
+          2.028518900749853,
+          0.948066552911464,
+          0.38163352491859476,
+          0.044296899778550926,
+          0.22248823601569703
+        ],
+        "core_histogram_relative_l2": 0.017738099205053343
+      }
+    },
+    {
+      "phase": {
+        "spectrum_relative_l2": 1.0697495116472252e-16,
+        "band_histogram_relative_l2": [
+          0.3935735032141641,
+          0.25009357363938933,
+          0.25420043662758834,
+          0.2377364604037971,
+          0.16841625198787064,
+          0.15313184736151544
+        ],
+        "core_histogram_relative_l2": 0.006629324082329436
+      },
+      "marginal": {
+        "spectrum_relative_l2": 0.0427519210814939,
+        "band_histogram_relative_l2": [
+          0.2589106169199231,
+          0.2836876630506915,
+          0.19038308370233767,
+          0.2542400188257467,
+          0.18010103709545272,
+          0.060394621612108
+        ],
+        "core_histogram_relative_l2": 0.002541513710487395
+      },
+      "shuffle": {
+        "spectrum_relative_l2": 0.0,
+        "band_histogram_relative_l2": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "core_histogram_relative_l2": 0.0
+      }
+    }
+  ]
+}

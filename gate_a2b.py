@@ -5,7 +5,7 @@ import numpy as np
 import sieve as S
 from relations import HebbLayer, FEATURES, pair_index, auc
 
-FRESH = ["cat", "cell"]
+FRESH = ["cell", "eagle"]  # cat aliases the training photograph chelsea.
 
 
 def drive_fn(layer, kind):
@@ -30,6 +30,7 @@ def evaluate(test, layers, seed):
 
 
 def main():
+    S.validate_sources(S.TRAIN_PHOTOS, FRESH)
     train = S.crops([S.photo(p) for p in S.TRAIN_PHOTOS], 40, seed=1)
     layers = {k: HebbLayer(k).fit(train) for k in ("rectified", "marginal")}
     fresh = S.crops([S.photo(p) for p in FRESH], 50, seed=22)
@@ -41,18 +42,20 @@ def main():
                            f["rectified"]["marginal"] >= f["marginal"]["marginal"] + .10 and
                            f["rectified"]["phase"] >= .80)
     print(json.dumps(res, indent=2))
-    Path("results/natural/gate_a2b.json").write_text(json.dumps(res, indent=2))
+    res["source_photos"] = FRESH
+    Path("results/natural/gate_a2b_corrected_sources.json").write_text(json.dumps(res, indent=2))
 
 
 if __name__ == "__main__":
     main()
 
 
-def curve_figure(path="results/natural/learning_curve_drive.png"):
+def curve_figure(path="results/natural/learning_curve_drive_corrected_sources.png"):
     """Descriptive (after A2b): drive-readout AUC on the fresh photographs vs experience."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    S.validate_sources(S.TRAIN_PHOTOS, FRESH)
     train = S.crops([S.photo(p) for p in S.TRAIN_PHOTOS], 40, seed=1)
     fresh = S.crops([S.photo(p) for p in FRESH], 50, seed=22)
     rng = np.random.default_rng(23)
@@ -77,6 +80,7 @@ def curve_figure(path="results/natural/learning_curve_drive.png"):
 def no_learning_control():
     """Post-hoc (after A2b): does the LEARNING matter? Same drive readout with W replaced by
     all ones (no experience) or by the learned W with its entries shuffled."""
+    S.validate_sources(S.TRAIN_PHOTOS, FRESH)
     fresh = S.crops([S.photo(p) for p in FRESH], 50, seed=22)
     rng = np.random.default_rng(23)
     controls = {c: [f(x, rng) for x in fresh] for c, f in S.CONTROLS.items()}
@@ -91,5 +95,6 @@ def no_learning_control():
                     ("learned_shuffled", np.random.default_rng(0).permutation(W))):
         out[name] = {c: auc([r @ w for r in real], [y @ w for y in v]) for c, v in ctrl.items()}
     out["W_min_max"] = [float(W.min()), float(W.max())]
-    Path("results/natural/no_learning_control_posthoc.json").write_text(json.dumps(out, indent=2))
+    out["source_photos"] = FRESH
+    Path("results/natural/no_learning_control_corrected_sources.json").write_text(json.dumps(out, indent=2))
     return out

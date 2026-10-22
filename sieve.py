@@ -6,16 +6,16 @@ boundary). Saving the departures between octave depths gives bands
     r_k = x_{d_k} - x_{d_{k+1}},   d = 0, 1, 2, 4, 8, 16, 32,   core = x_32,
     x = sum_k r_k + core   exactly.
 
-The torus matters: with it the sieve is a convolution, so every second-order
-statistic of every band (energy, signed correlation between bands at any offset)
+The torus matters: with it the sieve is a convolution, so every spatially averaged second-order
+statistic of these convolutional bands (energy, signed correlation between bands at any offset)
 is fixed by the image's power spectrum alone.
 
-Controls (all keep the image's power spectrum; they differ in what else they keep):
-  phase    : random Fourier phases. Every second-order statistic identical, all
-             higher-order structure gone. Freeman et al. 2013's spectrally matched noise.
+Controls (only phase scrambling preserves the spectrum exactly):
+  phase    : random Fourier phases. Every second-order statistic identical, many
+             higher-order dependencies disrupted. Freeman et al. 2013's spectrally matched noise.
   marginal : phase-scrambled, then alternately each band's coefficient histogram is
              matched to the real image's band and the amplitude spectrum re-imposed
-             (Heeger & Bergen 1995). Band energies AND band histograms ~matched;
+             (Heeger & Bergen 1995). Band energies AND band histograms only approximately matched;
              what is left different is how coefficients co-occur across scale and space.
   shuffle  : 16x16 blocks of the image permuted. Local pieces kept, arrangement broken.
              Caveat: block seams are new edges.
@@ -68,8 +68,30 @@ def marginal_matched(x, rng, iters=8):
         y = unsieve(bands, _match_hist(core, ref_core))
         F = np.fft.fft2(y)
         y = np.real(np.fft.ifft2(amp * np.exp(1j * np.angle(F))))
-    bands, core = sieve(y)                       # finish on the histograms
+    # Summing independently matched overlapping bands does NOT guarantee matching
+    # after reanalysis. The final step also changes the spectrum; audit both.
+    bands, core = sieve(y)                       # finish on intermediate histograms
     return unsieve([_match_hist(b, rb) for b, rb in zip(bands, ref_bands)], _match_hist(core, ref_core))
+
+
+def control_errors(reference, control):
+    """Measure matching on the final image, not intermediate modified bands."""
+    rel = lambda a, b: float(np.linalg.norm(a-b) / max(np.linalg.norm(a), 1e-12))
+    rb, rc = sieve(reference)
+    cb, cc = sieve(control)
+    return {
+        "spectrum_relative_l2": rel(np.abs(np.fft.fft2(reference)), np.abs(np.fft.fft2(control))),
+        "band_histogram_relative_l2": [rel(np.sort(a.ravel()), np.sort(b.ravel())) for a, b in zip(rb, cb)],
+        "core_histogram_relative_l2": rel(np.sort(rc.ravel()), np.sort(cc.ravel())),
+    }
+
+
+def validate_sources(train_names, test_names):
+    """Guard known dataset aliases; names alone are not independent photographs."""
+    canonical = lambda name: "chelsea" if name == "cat" else name
+    overlap = set(map(canonical, train_names)) & set(map(canonical, test_names))
+    if overlap:
+        raise ValueError(f"training/test source overlap: {sorted(overlap)}")
 
 
 def block_shuffle(x, rng, block=16):

@@ -21,9 +21,9 @@ Hebbian learning: one weight per (k, k', delta), updated image by image
 i.e. the running average of the co-activations seen in natural images. This is the
 covariance (observed-minus-expected) Hebb rule; with eta = 1/n it is exactly the mean.
 
-What the two versions can see: on a torus every linear-version relation is a
-second-order statistic, fixed by the power spectrum. The rectified version is
-fourth-order in the image: it can see whether things that happen at one scale
+What the two versions can see: on a torus each spatially averaged linear-version relation here is a
+second-order statistic, fixed by the power spectrum. The rectified version is nonlinear in the image (not literally a fourth-order
+polynomial because it uses absolute values): it can see whether things at one scale
 happen in the same place at another.
 """
 from dataclasses import dataclass, field
