@@ -1,0 +1,265 @@
+{
+ "protocol": "3000 experiences per learner, 10 seeds per world, accuracy on 400 fresh scenes with the mouth covered (a grey answer counts as a coin flip)",
+ "summary": {
+  "brains": 20,
+  "found_wiring": 20,
+  "found_after_median": 250,
+  "found_after_range": [
+   62,
+   1121
+  ],
+  "learner_accuracy_mean": 1,
+  "pairwise_mean": 0.4992,
+  "links_cut_mean": 0.4635,
+  "erased_mean": 0.5,
+  "mouth_never_seen_mean": 0.5,
+  "triple_A": [
+   1
+  ],
+  "triple_B": [
+   -1
+  ]
+ },
+ "rows": [
+  {
+   "seed": 1,
+   "A": {
+    "found_after": 63,
+    "rewirings": 1104,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.4975,
+    "links_cut": 0.45,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 1054,
+    "rewirings": 1119,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.49875,
+    "links_cut": 0.75,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 2,
+   "A": {
+    "found_after": 372,
+    "rewirings": 1109,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.5,
+    "links_cut": 0.2825,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 124,
+    "rewirings": 1057,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.50875,
+    "links_cut": 0.11,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 3,
+   "A": {
+    "found_after": 497,
+    "rewirings": 1106,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.50875,
+    "links_cut": 0.61125,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 809,
+    "rewirings": 1114,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.5025,
+    "links_cut": 0.83625,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 4,
+   "A": {
+    "found_after": 64,
+    "rewirings": 1103,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.50875,
+    "links_cut": 0.155,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 62,
+    "rewirings": 1101,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.5125,
+    "links_cut": 0.435,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 5,
+   "A": {
+    "found_after": 817,
+    "rewirings": 1080,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.51625,
+    "links_cut": 0.37,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 624,
+    "rewirings": 1110,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.495,
+    "links_cut": 1,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 6,
+   "A": {
+    "found_after": 561,
+    "rewirings": 1112,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.485,
+    "links_cut": 0.7525,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 248,
+    "rewirings": 1061,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.48125,
+    "links_cut": 0.3925,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 7,
+   "A": {
+    "found_after": 125,
+    "rewirings": 1105,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.49,
+    "links_cut": 0.255,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 683,
+    "rewirings": 1113,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.495,
+    "links_cut": 0.61125,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 8,
+   "A": {
+    "found_after": 249,
+    "rewirings": 1107,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.525,
+    "links_cut": 0.265,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 248,
+    "rewirings": 1106,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.48125,
+    "links_cut": 0.2325,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 9,
+   "A": {
+    "found_after": 62,
+    "rewirings": 1102,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.4875,
+    "links_cut": 0.5925,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 250,
+    "rewirings": 1062,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.51125,
+    "links_cut": 0.6075,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  },
+  {
+   "seed": 10,
+   "A": {
+    "found_after": 1121,
+    "rewirings": 1121,
+    "other_kept": [],
+    "triple": 1,
+    "learner": 1,
+    "pairwise": 0.47875,
+    "links_cut": 0.475,
+    "erased": 0.5
+   },
+   "B": {
+    "found_after": 124,
+    "rewirings": 1104,
+    "other_kept": [],
+    "triple": -1,
+    "learner": 1,
+    "pairwise": 0.5,
+    "links_cut": 0.08625,
+    "erased": 0.5
+   },
+   "mouth_never_seen": 0.5
+  }
+ ]
+}

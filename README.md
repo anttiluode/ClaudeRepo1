@@ -1,5 +1,11 @@
 # ClaudeRepo1 — which configurations across the Sihti bands occur together?
 
+> **New page:** [`world.html`](world.html) — *The world that learns what it cannot see*, Sol's proposed demo.
+> Two learners live in two worlds built from the same nine pieces. Every piece and every pair is equally
+> frequent in both; only a three-way relation differs (world A: matching eyes come with a smile; world B: with a
+> frown). Nobody tells them which pieces belong together. Then both are shown the same face with the mouth covered.
+> See [The world that learns](#the-world-that-learns-worldhtml) below.
+
 > **Live toy:** [`index.html`](index.html) — *Living Paper*, the Model 5 idea in the browser: a webcam
 > view with an occluder, filled from a motion-carried memory that is checked against the present before
 > it is believed. Works with GitHub Pages (Settings → Pages → main, root). Simplified: smoothness prior
@@ -118,11 +124,61 @@ feature also scored 100%. The previous whole-image Sihti descriptor scored
 See [the result and limitations](docs/THREE_PIECE_RESULT.md) and
 [the full receipt](results/astra/three_piece.json). Gate B remains unbuilt.
 
+## The world that learns (`world.html`)
+
+Sol's proposed demo, after the three-piece result: show the same incomplete input producing different answers
+after different experience, show the internal relationships forming, then erase them and show the ability go.
+Astra's three-piece gate said the conjunction had to be *supplied*; this page asks whether a learner can find
+it itself, from pixels.
+
+**The worlds.** A 3×3 grid of 12×12-pixel pieces; each piece shows one of two glyphs, with jitter and pixel
+noise. Two eyes, a mouth, six clutter pieces. In both worlds every piece and every pair of pieces is independent
+and 50/50 (a test checks all 36 pairs); only the product eye × eye × mouth differs, +1 in A and −1 in B.
+
+**The learner.** 24 branches, each wired at random to 2 or 3 pieces, each with up to 6 codewords of the joint
+look of its pieces (competitive learning: only the closest codeword moves; a new codeword only for an experience
+that is new in at least one piece). Before learning from an experience, each branch hides one of its own pieces,
+predicts it from the others, and checks. Branches that stay at chance are rewired; branches that predict reliably
+are kept. Completion: every kept branch touching a covered piece weighs its codewords against the visible pieces
+and any peeked pixels; its say is reduced when its best explanation fits badly or a peek contradicts it.
+
+**Receipt** (`node world_receipt.mjs` → [results/world/receipt.json](results/world/receipt.json); 10 seeds per
+world, 3,000 experiences per learner, 400 fresh test scenes each, a grey answer scored as a coin flip):
+
+| | covered mouth right |
+|---|---|
+| learner, own world (20 learners) | **100%** (every learner) |
+| same experience, delta-rule linear map (pairs only) | 49.9% |
+| learned links cut (codewords kept, re-paired) | 46% mean (range 9–100%) |
+| erased | 50% |
+| mouth never in its experience | 50% |
+
+* All 20 learners found the eye–eye–mouth wiring by themselves, after 62 to 1,121 experiences (median 250).
+  No learner kept any other wiring. The kept branch's read-out rule is exactly +1.00 (A) or −1.00 (B) for the
+  three-way product, and 0.00 for every pair inside it.
+* `node tests/test_world_core.mjs` (about 40 s) also checks: the same face gets a smile from A and a frown from
+  B; a peek that contradicts B drops its certainty below 0.3 while the same peek keeps A above 0.9; with an
+  eye and the mouth both covered, certainty starts low and rises with a mouth peek, and the hidden eye comes out
+  round for A and flat for B; a scene with a noise eye gets no support; and the linear control does learn a
+  world where the mouth simply copies one eye (99%), so its 50% here is a real failure, not a broken control.
+
+**What this does not show.** It is a toy built so that only the three-way relation carries the answer: nine
+pieces in fixed places, two glyphs each, no translation, a hand-set pixel noise level (measured on the world:
+same glyph ≤ 0.031, different glyph ≥ 0.052 per-pixel squared distance). Finding the wiring is a random search
+over 84 triples (plus pairs), judged by self-prediction; with real images the number of possible groupings
+explodes, and that search cost is the open problem. An early version with whole-scene competing units (no
+self-test) found the conjunction only when initialisation was lucky (K=4: 65–100% across seeds), which is why
+the scarcity result from the scratch check was not used here. The parts are known: competitive learning
+(Rumelhart & Zipser 1985), Barlow's suspicious coincidences, masked self-prediction, synaptic turnover,
+mixture-model completion.
+
 ## Run it
 
 ```bash
 pip install -r requirements.txt pytest
 python -m pytest -q          # sieve, controls, source isolation, experience and parity checks
+node tests/test_world_core.mjs   # world.html's learner and controls (about 40 s)
+node world_receipt.mjs           # the 10-seed receipt in results/world/receipt.json (about 4 min)
 python three_piece_gate.py   # bounded synthetic three-way relation test; no downloads
 python gate_a.py             # Gate A (about a minute)
 python diagnose_a.py         # post-hoc probe

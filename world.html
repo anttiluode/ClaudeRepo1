@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The World That Learns</title>
+<meta name="description" content="Two small learners in two worlds made of the same pieces discover, from experience alone, which pieces belong together — then see the same covered scene and answer differently.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wdth,wght@0,75..100,400..700;1,75..100,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #e8ecef; --sheet: #f7f9fa; --ink: #16202a; --muted: #56626e; --rule: #cbd3da;
+    --a: #2f55c4; --a-soft: #dde5fa; --b: #a3336f; --b-soft: #f6e0ec;
+    --print: #13284a; --print-ink: #e6eef6; --cover: #31435f;
+    --focus: #1a73e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f141a; --sheet: #161d25; --ink: #e2e8ee; --muted: #9aa6b2; --rule: #2a3440;
+      --a: #85a2ff; --a-soft: #1c2747; --b: #ee86bd; --b-soft: #3a1c2d;
+      --print: #0b1a31; --print-ink: #dfe9f3; --cover: #2a3a52; --focus: #8ab4ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f141a; --sheet: #161d25; --ink: #e2e8ee; --muted: #9aa6b2; --rule: #2a3440;
+    --a: #85a2ff; --a-soft: #1c2747; --b: #ee86bd; --b-soft: #3a1c2d;
+    --print: #0b1a31; --print-ink: #dfe9f3; --cover: #2a3a52; --focus: #8ab4ff;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+         font: 400 16px/1.55 "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+         font-variant-numeric: tabular-nums; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 16px 64px; }
+  a { color: inherit; text-underline-offset: 3px; }
+  h1 { font-size: clamp(28px, 4.2vw, 46px); line-height: 1.05; font-weight: 600; font-stretch: 82%;
+       letter-spacing: -0.02em; margin: 0 0 12px; max-width: 16em; }
+  h2 { font-size: 19px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.005em; }
+  h3 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  p { margin: 0 0 10px; }
+  .lede { max-width: 64ch; color: var(--ink); font-size: 17px; margin-bottom: 18px; }
+  .lede em { font-style: normal; font-weight: 600; }
+  .small { font-size: 13.5px; color: var(--muted); }
+  button { font: inherit; font-size: 14.5px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink);
+           padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.go { background: var(--ink); color: var(--sheet); border-color: var(--ink); font-weight: 600; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+  button:focus-visible, input:focus-visible, canvas:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .runbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 22px; }
+  .runbar label { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); }
+  input[type=range] { accent-color: var(--ink); }
+
+  /* the instrument: brain A | the shared scene | brain B */
+  .instrument { display: grid; grid-template-columns: 1fr minmax(250px, 300px) 1fr; gap: 18px; align-items: start; }
+  .brain { background: var(--sheet); border-radius: 18px; padding: 16px; border-top: 5px solid var(--c); }
+  .brain.a { --c: var(--a); --c-soft: var(--a-soft); }
+  .brain.b { --c: var(--b); --c-soft: var(--b-soft); }
+  .brain h2 { color: var(--c); }
+  .scene { padding: 6px 2px; text-align: center; }
+  .scene h2 { margin-top: 4px; }
+  .print { width: 100%; height: auto; display: block; border-radius: 10px; image-rendering: pixelated; background: var(--print); }
+  .answer { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; margin: 10px 0 14px; }
+  .answer .print { box-shadow: 0 0 0 3px var(--c); }
+  .verdict { font-size: 15px; }
+  .verdict .word { font-size: 22px; font-weight: 600; font-stretch: 85%; display: block; line-height: 1.15; }
+  .meter { height: 7px; background: var(--c-soft); border-radius: 4px; overflow: hidden; margin: 6px 0 2px; }
+  .meter i { display: block; height: 100%; background: var(--c); width: 0; transition: width .25s; }
+  .tileverdict + .tileverdict { margin-top: 10px; }
+  .wires { display: grid; grid-template-columns: 132px 1fr; gap: 14px; align-items: start; border-top: 1px solid var(--rule); padding-top: 12px; }
+  .wires canvas { width: 100%; height: auto; display: block; }
+  .rule { display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
+  .rule .row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .rule canvas { width: 30px; height: 30px; border-radius: 4px; image-rendering: pixelated; background: var(--print); }
+  .feed { display: flex; gap: 12px; align-items: center; border-top: 1px solid var(--rule); padding-top: 12px; margin-top: 12px; }
+  .feed canvas { width: 54px; height: 54px; border-radius: 6px; image-rendering: pixelated; background: var(--print); flex: none; }
+  .scenebox { position: relative; }
+  #scene { cursor: pointer; max-width: 260px; margin: 0 auto; }
+  .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; margin: 10px 0 8px; background: var(--sheet); }
+  .seg button { border: 0; padding: 5px 12px; font-size: 13.5px; background: transparent; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+  .scene .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 6px 0; }
+  .scene .row button { font-size: 13px; padding: 5px 11px; }
+  .peek { display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--muted); margin: 10px 0 4px; text-align: left; }
+  .truth { font-size: 13.5px; color: var(--muted); margin: 4px 0 0; }
+  .control { margin-top: 18px; border-top: 1px solid var(--rule); padding-top: 12px; text-align: left; }
+  .control .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 6px; }
+  .control .pair .print { opacity: .95; }
+  .control figure { margin: 0; font-size: 12.5px; color: var(--muted); text-align: center; }
+
+  .curve { background: var(--sheet); border-radius: 18px; padding: 16px; margin-top: 18px; }
+  .curve canvas { width: 100%; height: 170px; display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--muted); margin: 2px 0 8px; }
+  .legend b { font-weight: 600; color: var(--ink); }
+  .swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px 10px; margin-top: 12px; align-items: center; }
+  .actions label { font-size: 14px; display: flex; gap: 6px; align-items: center; }
+
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px 36px; margin-top: 30px; }
+  .notes section { max-width: 62ch; }
+  .notes p, .notes li { font-size: 15px; }
+  .notes ul { padding-left: 18px; margin: 0 0 10px; }
+  .notes li { margin-bottom: 5px; }
+
+  @media (max-width: 900px) {
+    .instrument { grid-template-columns: 1fr; }
+    .scene { order: -1; }
+    #scene { max-width: 300px; }
+    .control .pair { max-width: 300px; margin-left: auto; margin-right: auto; }
+  }
+  @media (max-width: 420px) {
+    .answer, .wires { grid-template-columns: 110px 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>The world that learns what it cannot see</h1>
+  <p class="lede">Two small learners live in two worlds built from the same pieces. In both worlds every piece,
+  and every pair of pieces, turns up equally often. Only the way <em>three</em> pieces go together differs:
+  in world A, matching eyes come with a smile; in world B, matching eyes come with a frown. Nobody tells the
+  learners which pieces belong together. Let them live in their worlds, then show both the same face with
+  something covered.</p>
+
+  <div class="runbar">
+    <button class="go" id="run">Start experience</button>
+    <label>Speed <input type="range" id="speed" min="1" max="12" value="3" aria-label="Experiences per frame"></label>
+    <span class="small" id="runinfo">Neither learner has seen anything yet.</span>
+  </div>
+
+  <div class="instrument">
+    <section class="brain a" aria-label="Learner in world A">
+      <h2>Learner A</h2>
+      <p class="small" id="a-sub">Lives in world A: matching eyes, smile.</p>
+      <div class="answer">
+        <canvas class="print" id="a-out" width="216" height="216" aria-label="Learner A's completion of the scene"></canvas>
+        <div id="a-verdict" class="verdict"></div>
+      </div>
+      <div class="wires">
+        <canvas id="a-wires" width="264" height="264" aria-label="Learner A's wiring between pieces"></canvas>
+        <div>
+          <h3>What its experience connected</h3>
+          <p class="small" id="a-wiretext"></p>
+          <div class="rule" id="a-rule"></div>
+        </div>
+      </div>
+      <div class="feed">
+        <canvas id="a-feed" width="36" height="36" aria-hidden="true"></canvas>
+        <p class="small" id="a-feedtext">Waiting for its first experience.</p>
+      </div>
+    </section>
+
+    <section class="scene" aria-label="The scene both learners are shown">
+      <h2>The same scene, shown to both</h2>
+      <p class="small">Click a piece to change it.</p>
+      <div class="scenebox"><canvas class="print" id="scene" width="216" height="216" tabindex="0"
+        aria-label="The scene. Click a tile to change it or cover it."></canvas></div>
+      <div class="seg" role="group" aria-label="What a click does">
+        <button id="mode-change" aria-pressed="true">Change a piece</button>
+        <button id="mode-cover" aria-pressed="false">Cover a piece</button>
+      </div>
+      <div class="row">
+        <button id="cover-mouth">Cover the mouth</button>
+        <button id="cover-eyemouth">Cover an eye and the mouth</button>
+        <button id="newscene">New face</button>
+      </div>
+      <label class="peek"><span><span id="peeklabel">Peek under the mouth's cover</span>: <span id="peekval">nothing yet</span></span>
+        <input type="range" id="peek" min="0" max="100" value="0" aria-label="Fraction of covered pixels revealed"></label>
+      <p class="truth" id="truth"></p>
+
+      <div class="control">
+        <h3>Same experience, links two at a time</h3>
+        <p class="small">A delta-rule linear map trained on the very same scenes. It can only learn how pieces
+        relate in pairs, and in these worlds pairs say nothing.</p>
+        <div class="pair">
+          <figure><canvas class="print" id="la-out" width="216" height="216" aria-label="Pairwise control trained in world A"></canvas><figcaption>trained in world A</figcaption></figure>
+          <figure><canvas class="print" id="lb-out" width="216" height="216" aria-label="Pairwise control trained in world B"></canvas><figcaption>trained in world B</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="brain b" aria-label="Learner in world B">
+      <h2>Learner B</h2>
+      <p class="small" id="b-sub">Lives in world B: matching eyes, frown.</p>
+      <div class="answer">
+        <canvas class="print" id="b-out" width="216" height="216" aria-label="Learner B's completion of the scene"></canvas>
+        <div id="b-verdict" class="verdict"></div>
+      </div>
+      <div class="wires">
+        <canvas id="b-wires" width="264" height="264" aria-label="Learner B's wiring between pieces"></canvas>
+        <div>
+          <h3>What its experience connected</h3>
+          <p class="small" id="b-wiretext"></p>
+          <div class="rule" id="b-rule"></div>
+        </div>
+      </div>
+      <div class="feed">
+        <canvas id="b-feed" width="36" height="36" aria-hidden="true"></canvas>
+        <p class="small" id="b-feedtext">Waiting for its first experience.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="curve" aria-label="Learning curves">
+    <h2>How often each one gets a covered mouth right</h2>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--a)"></i>Learner A <b id="acc-a">–</b></span>
+      <span><i class="swatch" style="background:var(--b)"></i>Learner B <b id="acc-b">–</b></span>
+      <span><i class="swatch" style="background:var(--muted)"></i>Links two at a time (both worlds) <b id="acc-l">–</b></span>
+      <span>Each point: 60 fresh scenes from the learner's own world, mouth covered. Guessing scores 50%.</span>
+    </div>
+    <canvas id="curve" width="1100" height="170" aria-label="Accuracy over experience"></canvas>
+    <div class="actions">
+      <button id="erase">Erase what they learned</button>
+      <button id="cut">Cut the links, keep the pieces</button>
+      <button id="swap" aria-pressed="false">Move learner A into world B</button>
+      <label><input type="checkbox" id="hidemouth"> Never let them see a mouth</label>
+      <button id="reset">Start over</button>
+    </div>
+  </section>
+
+  <div class="notes">
+    <section>
+      <h2>How a learner learns</h2>
+      <p>Each learner has 24 small branches. A branch is wired to two or three of the nine pieces and keeps a
+      handful of snapshots of what those pieces looked like together (competitive learning: only the closest
+      snapshot moves toward each new experience).</p>
+      <p>Before learning from an experience, every branch tests itself. It hides one of its own pieces, predicts it
+      from the others, and checks. A branch that keeps guessing at chance is cut and regrows on other pieces. A
+      branch that predicts reliably is kept. Pairs never pass the test here, because in these worlds no piece says
+      anything about any other single piece. Only the branch that happens to wire the two eyes and the mouth
+      together does, and it holds the opposite rule in the two worlds.</p>
+      <p>To fill a covered piece, every kept branch that touches it weighs its snapshots against what is visible (and
+      against any pixels you peek at). How sure it is depends on how much the evidence agrees. A scene unlike anything
+      it has lived through, or a peek that contradicts it, takes its say away.</p>
+    </section>
+    <section>
+      <h2>What to try</h2>
+      <ul>
+        <li>Before any experience, both learners paint a grey average. Start experience and watch the wiring search
+          until one branch locks onto the eyes and the mouth.</li>
+        <li>Change one eye. Both learners flip their answer, in opposite directions.</li>
+        <li>Cover an eye and the mouth. Neither can tell. Slide the peek: as the mouth shows, the hidden eye appears
+          too, and not the same eye for both learners.</li>
+        <li>Cover only the mouth of a world A face and peek: learner B's certainty collapses as the evidence disagrees with it.</li>
+        <li>Cut the links: every stored piece is still there, only re-paired. The answers become wrong until the
+          self-tests notice and the learner rebuilds.</li>
+        <li>Move learner A into world B and watch its own experience overrule what it knew.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>What this is, and what it is not</h2>
+      <p id="receipt">Measured with this page's own code in node (<code>world_receipt.mjs</code>): 20 learners, ten seeds
+      per world, 3,000 experiences each. All 20 found the eye, eye and mouth wiring by themselves, after 62 to 1,121
+      experiences (median 250), and none kept any other wiring. A covered mouth: every learner 100%; links two at a time
+      49.9%; erased 50%; never shown a mouth 50%; links cut 46% on average (9 to 100%, because a random re-pairing
+      sometimes lands on an equivalent one).</p>
+      <p>It is a toy: nine pieces in fixed places, two glyphs per piece, a hand-set pixel noise level. The world was
+      built so that only the three-way relation carries the answer. The search over wirings is a random search over
+      84 possible triples; in real images the number of possible groupings explodes, and that is the open problem.
+      The parts are old: competitive learning (Rumelhart &amp; Zipser 1985), Barlow's suspicious coincidences,
+      masked self-prediction, synaptic turnover, mixture-model completion.</p>
+      <p>From the Oct 22 thread with Astra, Sol and Gemini: <a href="https://github.com/anttiluode/ClaudeRepo1">ClaudeRepo1</a>.
+      The webcam memory toy is <a href="index.html">Living Paper</a>.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+// CORE-BEGIN  (pure functions, no DOM; tested with node in tests/test_world_core.mjs)
+const WL = (() => {
+  "use strict";
+  const T = 12, S = 3 * T, N = S * S;                   // 3x3 tiles of 12x12 px -> 36x36 scene
+  const EYE_L = 0, EYE_R = 2, MOUTH = 7;                // tile indices (row*3+col)
+  const TILES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+
+  function rng(seed) {                                  // seeded, so worlds and tests reproduce
+    let s = (seed >>> 0) || 1;
+    const u = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+    u.normal = () => { let a = 0; for (let i = 0; i < 6; i++) a += u(); return (a - 3) * Math.SQRT2; };
+    u.int = n => Math.floor(u() * n);
+    return u;
+  }
+
+  // ---- glyphs, drawn as soft distance fields (tile-centred coordinates) -----------------------
+  const seg = (px, py, ax, ay, bx, by) => {
+    const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy)));
+    return Math.hypot(px - ax - t * vx, py - ay - t * vy);
+  };
+  const ink = (d, w) => Math.max(0, Math.min(1, w - d + 0.5));
+  const arc = (x, y, cy, up, w) => {
+    const a = Math.atan2(y - cy, x), d = Math.abs(Math.hypot(x, y - cy) - 3.6);
+    const inside = up ? a > 0.35 && a < Math.PI - 0.35 : a < -0.35 && a > -Math.PI + 0.35;
+    return inside ? ink(d, w * 0.75) : 0;
+  };
+  const GLYPHS = {
+    ring:  (x, y, w) => ink(Math.abs(Math.hypot(x, y) - 3.2), w * 0.6),
+    bar:   (x, y, w) => ink(seg(x, y, -3.6, 0, 3.6, 0), w * 0.75),
+    smile: (x, y, w) => arc(x, y, -1.8, true, w),
+    frown: (x, y, w) => arc(x, y, 1.8, false, w),
+    dots:  (x, y, w) => Math.max(ink(Math.hypot(x + 2.2, y + 1.6), w * 1.1), ink(Math.hypot(x - 2.2, y - 1.6), w * 1.1)),
+    cross: (x, y, w) => Math.max(ink(seg(x, y, -3, -3, 3, 3), w * 0.7), ink(seg(x, y, -3, 3, 3, -3), w * 0.7)),
+    wave:  (x, y, w) => Math.abs(x) < 4.2 ? ink(Math.abs(y - 1.6 * Math.sin(x * 0.9)), w * 0.6) : 0,
+    box:   (x, y, w) => ink(Math.abs(Math.max(Math.abs(x), Math.abs(y)) - 3), w * 0.6),
+    vbar:  (x, y, w) => ink(seg(x, y, 0, -3.8, 0, 3.8), w * 0.9),
+    tri:   (x, y, w) => Math.max(ink(seg(x, y, -3.4, 2.6, 3.4, 2.6), w * .6), ink(seg(x, y, -3.4, 2.6, 0, -3.2), w * .6), ink(seg(x, y, 3.4, 2.6, 0, -3.2), w * .6)),
+  };
+  // the two glyphs each tile can show: [state -1, state +1]
+  const PAIRS = [
+    ["ring", "bar"],  ["dots", "cross"], ["ring", "bar"],
+    ["wave", "box"],  ["vbar", "tri"],   ["cross", "wave"],
+    ["box", "dots"],  ["frown", "smile"], ["tri", "vbar"],
+  ];
+  const ROLE = ["eye", "clutter", "eye", "clutter", "clutter", "clutter", "clutter", "mouth", "clutter"];
+
+  // ---- the two worlds ---------------------------------------------------------------------------
+  // World A: eyes alike -> smile, eyes different -> frown.  World B: the opposite.
+  // Every tile and every PAIR of tiles has identical statistics in A and B (all independent, 50/50);
+  // only the three-way product eyeL*eyeR*mouth differs: +1 in A, -1 in B.
+  function sampleStates(world, u) {
+    const s = TILES.map(() => (u() < 0.5 ? -1 : 1));
+    if (world === "copy") s[MOUTH] = s[EYE_L];        // a pairwise world, used only to test the control
+    else s[MOUTH] = (world === "A" ? 1 : -1) * s[EYE_L] * s[EYE_R];
+    return s;
+  }
+  const BG = 0.12, FG = 0.92;
+  function render(states, u, opt = {}) {
+    const noise = opt.noise ?? 0.05, jit = u ? (opt.jitter ?? 0.5) : 0;
+    const x = new Float32Array(N);
+    for (let t = 0; t < 9; t++) {
+      const g = GLYPHS[PAIRS[t][states[t] > 0 ? 1 : 0]];
+      const dx = jit ? (u() - 0.5) * 2 * jit : 0, dy = jit ? (u() - 0.5) * 2 * jit : 0;
+      const w = jit ? 0.92 + 0.16 * u() : 1, lvl = jit ? 0.85 + 0.15 * u() : 1;
+      const r0 = Math.floor(t / 3) * T, c0 = (t % 3) * T;
+      for (let r = 0; r < T; r++) for (let c = 0; c < T; c++)
+        x[(r0 + r) * S + c0 + c] = BG + (FG - BG) * lvl * g(c - 5.5 - dx, r - 5.5 - dy, w * 1.25) + (u && noise ? noise * u.normal() : 0);
+    }
+    return x;
+  }
+  const tileOf = new Uint8Array(N);
+  for (let i = 0; i < N; i++) tileOf[i] = Math.floor(Math.floor(i / S) / T) * 3 + Math.floor((i % S) / T);
+  const PIX = TILES.map(t => { const a = []; for (let i = 0; i < N; i++) if (tileOf[i] === t) a.push(i); return Int32Array.from(a); });
+  function maskFor(covered) { const m = new Uint8Array(N).fill(1); for (const t of covered) for (const i of PIX[t]) m[i] = 0; return m; }
+
+  // a tile read as a state score: -1 / +1 for the clean glyphs, ~0 for a grey average of both
+  const REF = TILES.map(t => [-1, 1].map(st => { const s = TILES.map(() => -1); s[t] = st; return render(s, null); }));
+  const REFD = TILES.map(t => { let den = 0; for (const i of PIX[t]) den += (REF[t][1][i] - REF[t][0][i]) ** 2; return den; });
+  function tileScore(img, t, off = 0) {       // img may be a full scene (off = 0) or a branch vector
+    let num = 0, q = off;
+    for (const i of PIX[t]) { const d = REF[t][1][i] - REF[t][0][i]; num += (img[off ? q++ : i] - 0.5 * (REF[t][0][i] + REF[t][1][i])) * d; }
+    return 2 * num / REFD[t];
+  }
+
+  // ---- a brain ------------------------------------------------------------------------------------
+  // Branches: each is wired to 2 or 3 tiles and keeps a small codebook of the joint configurations it
+  // has seen there (competitive learning: only the best-matching codeword moves, dW = eta (x - W)).
+  // Every experience, a branch first TESTS itself: it covers one of its tiles, predicts it from the
+  // others, then checks. A branch whose predictions stay at chance is rewired to other tiles; one that
+  // predicts reliably becomes stable. Nothing tells it which tiles belong together.
+  const P = PIX[0].length;                     // pixels per tile
+  function makeBrain(opt = {}, seed = 1) {
+    const B = { u: rng(seed), branches: [], seen: 0, rewired: 0, nBranches: opt.branches ?? 24, Kc: opt.codewords ?? 6,
+                hide: opt.hide ?? [], mean: new Float32Array(N).fill(0.3), lin: makeLin(), patience: opt.patience ?? 60,
+                stableAt: opt.stableAt ?? 0.85 };
+    for (let k = 0; k < B.nBranches; k++) B.branches.push(newBranch(B));
+    return B;
+  }
+  function newBranch(B, avoid = null, tries = 0) {
+    const size = B.u() < 0.25 ? 2 : 3, tiles = [];
+    while (tiles.length < size) { const t = B.u.int(9); if (!tiles.includes(t)) tiles.push(t); }
+    tiles.sort((a, b) => a - b);
+    // do not regrow onto the wiring just abandoned, nor duplicate a wiring another branch already holds
+    const key = tiles.join(), taken = B.branches.some(o => o.stable && o.tiles.join() === key);
+    if (tries < 50 && ((avoid && key === avoid.join()) || taken)) return newBranch(B, avoid, tries + 1);
+    return { tiles, cw: [], n: [], v2: VN, acc: 0.5, tests: 0, stable: false };
+  }
+  const gather = (b, x) => { const v = new Float32Array(b.tiles.length * P); b.tiles.forEach((t, j) => PIX[t].forEach((i, q) => v[j * P + q] = x[i])); return v; };
+  // Posterior over codewords from the given slots (tile positions inside the branch). Neighbouring
+  // pixels move together (a glyph jitters as a whole), so pixel errors are not independent evidence:
+  // the log-likelihood is tempered by KAPPA, roughly the number of pixels per independent sample.
+  const KAPPA = 40;
+  // Pixel noise level of a glyph seen again (jitter + sensor noise), per pixel; measured on the world,
+  // fixed. A tile is 'new' to a codeword when it differs by more than NOVEL times this.
+  const VN = 0.012, NOVEL = 3.3;
+  function cwPosterior(b, v, slots, extra = null) {
+    const K = b.cw.length, ll = new Float64Array(K), s2 = VN;
+    for (let k = 0; k < K; k++) {
+      let d = 0; const w = b.cw[k];
+      for (const j of slots) for (let q = j * P, e = q + P; q < e; q++) { const r = v[q] - w[q]; d += r * r; }
+      if (extra) for (const [q, val] of extra) { const r = val - w[q]; d += r * r; }
+      ll[k] = -d / (2 * s2 * KAPPA) + Math.log(b.n[k]);
+    }
+    const mx = Math.max(...ll); let Z = 0; const p = Array.from(ll, l => (Z += Math.exp(l - mx), Math.exp(l - mx)));
+    return p.map(q => q / Z);
+  }
+  function learn(B, x) {
+    B.seen++;
+    for (let i = 0; i < N; i++) B.mean[i] += (x[i] - B.mean[i]) / Math.min(B.seen, 500);
+    learnLin(B.lin, x, B.hide);
+    for (let bi = 0; bi < B.branches.length; bi++) {
+      let b = B.branches[bi];
+      const avail = b.tiles.map(t => !B.hide.includes(t));
+      const v = gather(b, x);
+      // 1. self-test: cover one of my tiles, predict it from the others, check
+      const can = b.tiles.map((_, j) => j).filter(j => avail[j]);
+      if (b.cw.length >= 2 && can.length >= 1) {
+        const h = can[B.u.int(can.length)], others = can.filter(j => j !== h);
+        if (others.length) {
+          const p = cwPosterior(b, v, others), pred = new Float32Array(P);
+          b.cw.forEach((w, k) => { for (let q = 0; q < P; q++) pred[q] += p[k] * w[h * P + q]; });
+          const truth = scoreVec(v.subarray(h * P, h * P + P), b.tiles[h]), guess = scoreVec(pred, b.tiles[h]);
+          const ok = Math.sign(truth) === Math.sign(guess) && Math.abs(guess) > 0.3 ? 1 : 0;
+          b.tests++; b.acc += (ok - b.acc) / Math.min(b.tests, 60);
+        } else { b.tests++; b.acc += (0 - b.acc) / Math.min(b.tests, 60); }   // a tile it can never check
+      } else if (can.length < b.tiles.length) { b.tests++; b.acc += (0 - b.acc) / Math.min(b.tests, 60); }
+      // 2. competitive learning on what was seen. A codeword is only created for an experience that is
+      // new in at least one tile (judged tile by tile, so a single differing glyph is not diluted by
+      // the tiles that agree); otherwise the best-matching codeword moves toward it.
+      const slots = can;
+      if (slots.length) {
+        let best = -1, bd = Infinity, bmax = Infinity;
+        for (let k = 0; k < b.cw.length; k++) {
+          let d = 0, dm = 0; const w = b.cw[k];
+          for (const j of slots) { let dj = 0; for (let q = j * P, e = q + P; q < e; q++) { const r = v[q] - w[q]; dj += r * r; } d += dj; dm = Math.max(dm, dj); }
+          if (d < bd) { bd = d; bmax = dm; best = k; }
+        }
+        const novel = best < 0 || bmax / P > NOVEL * VN;
+        if (novel && b.cw.length < B.Kc) { b.cw.push(Float32Array.from(v)); b.n.push(1); }
+        else if (novel) {                       // full: the least-used codeword is recruited for it
+          let lo = 0; for (let k = 1; k < b.n.length; k++) if (b.n[k] < b.n[lo]) lo = k;
+          b.cw[lo] = Float32Array.from(v); b.n[lo] = 1;
+        } else {
+          b.n[best]++; const eta = Math.max(1 / b.n[best], 0.01), w = b.cw[best];
+          for (const j of slots) for (let q = j * P, e = q + P; q < e; q++) w[q] += eta * (v[q] - w[q]);
+        }
+        for (let k = 0; k < b.n.length; k++) b.n[k] *= 0.9995;   // slow forgetting keeps usage current
+      }
+      // 3. structural plasticity: keep what predicts, rewire what does not
+      b.stable = b.tests >= B.patience && b.acc >= B.stableAt;
+      if ((b.tests >= B.patience && b.acc < 0.6) || (b.tests >= 2.5 * B.patience && b.acc < B.stableAt - 0.1))
+        { B.branches[bi] = newBranch(B, b.tiles); B.rewired++; }
+    }
+  }
+  const scoreVec = (vec, t) => { let num = 0, q = 0; for (const i of PIX[t]) { const d = REF[t][1][i] - REF[t][0][i]; num += (vec[q++] - 0.5 * (REF[t][0][i] + REF[t][1][i])) * d; } return 2 * num / REFD[t]; };
+
+  // ---- pairwise control: a delta-rule linear map (Widrow-Hoff) between 3x3-px block features ----
+  // It sees exactly the same experience and predicts each tile from all the other tiles' blocks
+  // (inputs and outputs centred on their running means). A linear map can only use pairwise
+  // (second-order) statistics: it learns a world where the mouth copies one eye, but not A or B.
+  const F = 9 * 16;
+  function makeLin() { return { W: new Float32Array(F * F), mf: new Float32Array(F).fill(0.3), n: 0 }; }
+  function feats(x) {
+    const f = new Float32Array(F);
+    for (let i = 0; i < N; i++) { const r = Math.floor(i / S), c = i % S; f[tileOf[i] * 16 + Math.floor((r % T) / 3) * 4 + Math.floor((c % T) / 3)] += x[i] / 9; }
+    return f;
+  }
+  function learnLin(L, x, hide = []) {
+    const f = feats(x); L.n++;
+    for (let j = 0; j < F; j++) L.mf[j] += (f[j] - L.mf[j]) / Math.min(L.n, 300);
+    const c = f.map((v, j) => hide.includes(j >> 4) ? 0 : v - L.mf[j]);
+    let nn = 1e-3; for (let j = 0; j < F; j++) nn += c[j] * c[j];
+    const eta = 0.3 / nn;                                      // normalised LMS
+    for (let o = 0; o < F; o++) {
+      const to = o >> 4; if (hide.includes(to)) continue;
+      const row = o * F; let y = 0;
+      for (let j = 0; j < F; j++) if ((j >> 4) !== to) y += L.W[row + j] * c[j];
+      const e = (c[o] - y) * eta;
+      for (let j = 0; j < F; j++) if ((j >> 4) !== to) L.W[row + j] += e * c[j];
+    }
+  }
+  function linFill(B, x, covered) {
+    const L = B.lin, f = feats(x), out = Float32Array.from(x);
+    const c = f.map((v, j) => covered.includes(j >> 4) ? 0 : v - L.mf[j]);   // a covered tile carries no evidence
+    for (const t of covered) {
+      const blk = new Float32Array(16);
+      for (let b = 0; b < 16; b++) { const o = t * 16 + b, row = o * F; let y = L.mf[o]; for (let j = 0; j < F; j++) if ((j >> 4) !== t) y += L.W[row + j] * c[j]; blk[b] = y; }
+      for (const i of PIX[t]) { const r = Math.floor(i / S), cc = i % S; out[i] = blk[Math.floor((r % T) / 3) * 4 + Math.floor((cc % T) / 3)]; }
+    }
+    return out;
+  }
+
+  // ---- completion -----------------------------------------------------------------------------------
+  // Every stable branch that touches a covered tile and still sees something (a visible tile of its
+  // own, or peeked pixels under the cover) weighs its codewords by how well they fit that evidence;
+  // the believed codewords paint all of its covered tiles. A branch's say is its measured reliability,
+  // reduced when its best explanation fits the evidence badly (misfit) or when peeked pixels disagree
+  // with what it predicted (surprise). Where no branch speaks, the tile shows the average experience.
+  const fade = m => (m < 2.5 ? 1 : Math.exp(-(m - 2.5) / 1.5));
+  function infer(B, x, covered, reveal = null) {
+    const out = Float32Array.from(x), acc = {}, W = {}, pPlus = {}, used = {}, worst = {};
+    for (const t of covered) { acc[t] = new Float32Array(P); W[t] = 0; pPlus[t] = 0; used[t] = []; worst[t] = 0; }
+    for (const b of B.branches) {
+      if (!b.stable || b.cw.length < 2) continue;
+      const cov = b.tiles.map((t, j) => j).filter(j => covered.includes(b.tiles[j]));
+      if (!cov.length) continue;
+      const vis = b.tiles.map((t, j) => j).filter(j => !covered.includes(b.tiles[j]));
+      const v = gather(b, x), extra = [];
+      if (reveal) for (const j of cov) PIX[b.tiles[j]].forEach((i, q) => { if (reveal[i]) extra.push([j * P + q, x[i]]); });
+      if (!vis.length && !extra.length) continue;
+      const p = cwPosterior(b, v, vis, extra.length ? extra : null), s2 = VN;
+      let k0 = 0; p.forEach((q, k) => { if (q > p[k0]) k0 = k; });
+      let d = 0, npx = 0;
+      for (const j of vis) for (let q = j * P; q < j * P + P; q++) { d += (v[q] - b.cw[k0][q]) ** 2; npx++; }
+      for (const [q, val] of extra) { d += (val - b.cw[k0][q]) ** 2; npx++; }
+      const misfit = npx ? d / npx / s2 : 0;
+      // did the peek agree with the explanation the branch settled on? judged tile by tile, on inked
+      // pixels only, so neither the agreeing tiles nor the background can dilute a contradiction
+      let surprise = 0;
+      for (const j of cov) {
+        let e = 0, ne = 0;
+        for (const [q, val] of extra) if (q >= j * P && q < j * P + P) {
+          const y = b.cw[k0][q];
+          if (Math.max(Math.abs(val - BG), Math.abs(y - BG)) > 0.25) { e += (val - y) ** 2; ne++; }
+        }
+        if (ne >= 3) surprise = Math.max(surprise, e / ne / VN / 4);
+      }
+      const wgt = Math.max(0, (b.acc - 0.5) * 2) * fade(misfit) * fade(surprise);
+      for (const j of cov) {
+        const t = b.tiles[j];
+        b.cw.forEach((w, k) => { for (let q = 0; q < P; q++) acc[t][q] += wgt * p[k] * w[j * P + q]; });
+        const plus = b.cw.reduce((a, w, k) => a + (scoreVec(w.subarray(j * P, j * P + P), t) > 0 ? p[k] : 0), 0);
+        W[t] += wgt; pPlus[t] += wgt * plus; worst[t] = Math.max(worst[t], misfit, surprise);
+        used[t].push({ branch: b, p, misfit, surprise, weight: wgt });
+      }
+    }
+    const tiles = {};
+    for (const t of covered) {
+      const lam = Math.min(1, W[t]);
+      PIX[t].forEach((i, q) => { out[i] = lam * (W[t] > 1e-9 ? acc[t][q] / W[t] : 0) + (1 - lam) * B.mean[i]; });
+      if (reveal) PIX[t].forEach(i => { if (reveal[i]) out[i] = x[i]; });
+      const pp = W[t] > 1e-9 ? pPlus[t] / W[t] : 0.5;
+      tiles[t] = { belief: lam * Math.abs(2 * pp - 1), pPlus: pp, support: W[t], used: used[t], misfit: worst[t], score: tileScore(out, t) };
+    }
+    return { img: out, tiles };
+  }
+
+  // ---- what the brain holds, read out ---------------------------------------------------------------
+  // What a branch says, asked directly: show it clean glyphs on all but one of its tiles and read its
+  // prediction for the remaining one. 'pairs' = E[s_i * prediction_j] (what one tile says about another)
+  // and 'triple' = E[s_i * s_j * prediction_k]; +1 means 'alike -> state +1', -1 the opposite.
+  function rule(b) {
+    if (b.cw.length < 2) return null;
+    const m = b.tiles.length, h = m - 1, others = [...Array(h).keys()], out = { pairs: [], triple: null, table: [] };
+    const combos = h === 1 ? [[-1], [1]] : [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+    let trip = 0; const pr = others.map(() => 0);
+    for (const st of combos) {
+      const v = new Float32Array(m * P);
+      others.forEach(j => PIX[b.tiles[j]].forEach((i, q) => v[j * P + q] = REF[b.tiles[j]][st[j] > 0 ? 1 : 0][i]));
+      const p = cwPosterior(b, v, others), pred = new Float32Array(P);
+      b.cw.forEach((w, k) => { for (let q = 0; q < P; q++) pred[q] += p[k] * w[h * P + q]; });
+      const g = Math.max(-1, Math.min(1, scoreVec(pred, b.tiles[h]) / 0.6));
+      out.table.push({ given: st, predicts: g, pixels: pred });
+      st.forEach((sv, j) => pr[j] += sv * g / combos.length);
+      if (h === 2) trip += st[0] * st[1] * g / combos.length;
+    }
+    out.pairs = others.map(j => [b.tiles[j], b.tiles[h], pr[j]]);
+    if (h === 2) out.triple = trip;
+    return out;
+  }
+  // causal checks on the learned relations
+  function erase(B) {      // forget every learned relation (wiring, codewords, pairwise links, averages)
+    B.branches = []; for (let k = 0; k < B.nBranches; k++) B.branches.push(newBranch(B));
+    B.seen = 0; B.rewired = 0; B.mean.fill(0.3); B.lin = makeLin();
+  }
+  function cutLinks(B, u = B.u) {   // keep every stored piece, but re-pair one tile's content across codewords
+    for (const b of B.branches) {
+      const K = b.cw.length; if (K < 2) continue;
+      const h = b.tiles.includes(MOUTH) ? b.tiles.indexOf(MOUTH) : b.tiles.length - 1;
+      const parts = b.cw.map(w => w.slice(h * P, h * P + P));
+      for (let k = 0; k < K; k++) { const s = (k + 1 + u.int(K - 1)) % K; b.cw[k].set(parts[s], h * P); }
+    }
+  }
+  function evaluate(B, world, n = 200, seed = 99, method = "branches") {
+    const u = rng(seed); let ok = 0;
+    for (let r = 0; r < n; r++) {
+      const s = sampleStates(world, u), x = render(s, u);
+      const y = method === "branches" ? infer(B, x, [MOUTH]).img : linFill(B, x, [MOUTH]);
+      const sc = tileScore(y, MOUTH);
+      ok += Math.abs(sc) < 0.3 ? 0.5 : (Math.sign(sc) === s[MOUTH] ? 1 : 0);   // a grey guess counts as a coin flip
+    }
+    return ok / n;
+  }
+  return { T, S, N, P, EYE_L, EYE_R, MOUTH, PAIRS, ROLE, PIX, rng, sampleStates, render, maskFor, tileOf, tileScore,
+           makeBrain, learn, infer, linFill, rule, erase, cutLinks, evaluate };
+})();
+if (typeof module !== "undefined") module.exports = WL;
+// CORE-END
+
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const NAMES = { ring: "round eye", bar: "flat eye", smile: "smile", frown: "frown", dots: "dots", cross: "cross",
+                  wave: "wave", box: "box", vbar: "line", tri: "triangle" };
+  const PLACE = ["left eye", "top piece", "right eye", "left piece", "middle piece", "right piece", "lower-left piece", "mouth", "lower-right piece"];
+
+  // ---------- state ----------
+  let A, B, running = false, aWorld = "A", seenTotal = 0, history = [], events = [], lastEval = 0;
+  let lastA = null, lastB = null;
+  const feedU = WL.rng(777);
+  function fresh() {
+    A = WL.makeBrain({}, 101); B = WL.makeBrain({}, 202);
+    A.hide = B.hide = $("hidemouth").checked ? [WL.MOUTH] : [];
+    aWorld = "A"; $("swap").setAttribute("aria-pressed", "false"); $("swap").textContent = "Move learner A into world B";
+    history = []; events = []; lastA = lastB = null; seenTotal = 0;
+  }
+  // the test scene
+  let states = [-1, 1, -1, 1, -1, 1, 1, 1, -1], covered = [WL.MOUTH], sceneSeed = 5, mode = "change";
+  let peekOrder = null;
+  const sceneImg = () => WL.render(states, WL.rng(sceneSeed));
+  function newPeekOrder() {
+    const u = WL.rng(sceneSeed + 31);
+    peekOrder = WL.PIX.map(px => { const a = Array.from(px); for (let i = a.length - 1; i > 0; i--) { const j = u.int(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; });
+  }
+  newPeekOrder();
+  // with the mouth covered, the peek lifts only the mouth's cover; otherwise every cover
+  const peekTiles = () => covered.includes(WL.MOUTH) ? [WL.MOUTH] : covered;
+  function revealMask() {
+    const f = +$("peek").value / 100; if (!f) return null;
+    const m = new Uint8Array(WL.N);
+    for (const t of peekTiles()) { const n = Math.round(f * peekOrder[t].length); for (let i = 0; i < n; i++) m[peekOrder[t][i]] = 1; }
+    return m;
+  }
+
+  // ---------- drawing ----------
+  function hexRGB(h) { h = h.replace("#", ""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); }
+  function paint(canvas, img, opt = {}) {
+    const S = WL.S, k = canvas.width / S, ctx = canvas.getContext("2d");
+    const lo = hexRGB(css("--print")), hi = hexRGB(css("--print-ink")), cv = hexRGB(css("--cover"));
+    const im = ctx.createImageData(S, S), d = im.data;
+    const cov = opt.covered ? WL.maskFor(opt.covered) : null, rev = opt.reveal;
+    for (let i = 0; i < WL.N; i++) {
+      let rgb;
+      if (cov && !cov[i] && !(rev && rev[i])) { const r = Math.floor(i / S), c = i % S; rgb = ((r + c) % 6 < 2) ? cv.map(v => Math.min(255, v + 22)) : cv; }
+      else { const v = Math.max(0, Math.min(1, (img[i] - 0.1) / 0.84)); rgb = lo.map((l, j) => l + (hi[j] - l) * v); }
+      d[4 * i] = rgb[0]; d[4 * i + 1] = rgb[1]; d[4 * i + 2] = rgb[2]; d[4 * i + 3] = 255;
+    }
+    const off = paint.off || (paint.off = document.createElement("canvas")); off.width = S; off.height = S;
+    off.getContext("2d").putImageData(im, 0, 0);
+    ctx.imageSmoothingEnabled = !!opt.smooth; ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+    if (opt.outline) {                                   // mark the tiles that were filled in
+      ctx.save(); ctx.strokeStyle = opt.outline; ctx.lineWidth = Math.max(2, k * 0.5); ctx.setLineDash([k * 1.5, k * 1.2]);
+      for (const t of opt.outlineTiles) { const r = Math.floor(t / 3), c = t % 3; ctx.strokeRect(c * 12 * k + k * 0.6, r * 12 * k + k * 0.6, 12 * k - k * 1.2, 12 * k - k * 1.2); }
+      ctx.restore();
+    }
+    if (opt.grid) {
+      ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.10)"; ctx.lineWidth = 1;
+      for (let j = 1; j < 3; j++) { ctx.beginPath(); ctx.moveTo(j * 12 * k, 0); ctx.lineTo(j * 12 * k, canvas.height); ctx.moveTo(0, j * 12 * k); ctx.lineTo(canvas.width, j * 12 * k); ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+  // a single tile's glyph or prediction, cut out for the rule table
+  function paintTile(canvas, t, pixels) {
+    const ctx = canvas.getContext("2d"); canvas.width = 12; canvas.height = 12;
+    const lo = hexRGB(css("--print")), hi = hexRGB(css("--print-ink")), im = ctx.createImageData(12, 12);
+    for (let q = 0; q < 144; q++) { const v = Math.max(0, Math.min(1, (pixels[q] - 0.1) / 0.84)); const rgb = lo.map((l, j) => l + (hi[j] - l) * v); im.data.set([rgb[0], rgb[1], rgb[2], 255], 4 * q); }
+    ctx.putImageData(im, 0, 0);
+  }
+  const CLEAN = Array.from({ length: 9 }, (_, t) => [-1, 1].map(st => { const s = Array(9).fill(-1); s[t] = st; const x = WL.render(s, null); return Float32Array.from(WL.PIX[t], i => x[i]); }));
+
+  function drawWires(canvas, brain, color) {
+    const ctx = canvas.getContext("2d"), W = canvas.width, cell = W / 3, muted = css("--muted"), ink = css("--ink");
+    ctx.clearRect(0, 0, W, W);
+    const center = t => [(t % 3 + 0.5) * cell, (Math.floor(t / 3) + 0.5) * cell];
+    // the nine pieces, faint
+    for (let t = 0; t < 9; t++) {
+      const [x, y] = center(t), r = cell * 0.30;
+      ctx.fillStyle = css("--print"); ctx.globalAlpha = 0.9; roundRect(ctx, x - r, y - r, 2 * r, 2 * r, 6); ctx.fill();
+      ctx.globalAlpha = 1;
+      const g = document.createElement("canvas"); paintTile(g, t, CLEAN[t][1]);
+      ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 0.55; ctx.drawImage(g, x - r, y - r, 2 * r, 2 * r); ctx.globalAlpha = 1;
+    }
+    brain.branches.forEach((b, i) => {
+      const pts = b.tiles.map(center);
+      let hx = pts.reduce((a, p) => a + p[0], 0) / pts.length, hy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+      const ang = i * 2.39996, off = b.stable ? 0 : cell * 0.10; hx += Math.cos(ang) * off; hy += Math.sin(ang) * off;
+      const grow = Math.min(1, b.tests / 25);
+      if (b.stable && pts.length === 3) {
+        ctx.beginPath(); ctx.moveTo(...pts[0]); ctx.lineTo(...pts[1]); ctx.lineTo(...pts[2]); ctx.closePath();
+        ctx.fillStyle = color; ctx.globalAlpha = 0.16; ctx.fill(); ctx.globalAlpha = 1;
+      }
+      ctx.strokeStyle = b.stable ? color : muted; ctx.lineWidth = b.stable ? 4 : 1.2;
+      ctx.globalAlpha = b.stable ? 1 : 0.18 + 0.4 * grow * Math.max(0, b.acc);
+      for (const p of pts) { ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + (p[0] - hx) * grow, hy + (p[1] - hy) * grow); ctx.stroke(); }
+      ctx.fillStyle = b.stable ? color : muted; ctx.beginPath(); ctx.arc(hx, hy, b.stable ? 6 : 2.6, 0, 7); ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+  }
+  function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+  function keptBranch(brain) {
+    let best = null; for (const b of brain.branches) if (b.stable && (!best || b.acc > best.acc || (b.tiles.length > best.tiles.length))) best = b;
+    return best;
+  }
+  function drawRule(el, textEl, brain) {
+    const kept = brain.branches.filter(b => b.stable), b = keptBranch(brain);
+    const searching = brain.branches.length - kept.length;
+    textEl.textContent = brain.seen === 0 ? "No experience yet: 24 branches wired at random to two or three pieces."
+      : kept.length === 0 ? `Still searching: ${searching} branches testing wirings, ${brain.rewired} regrown so far, none kept.`
+      : `Kept ${kept.length === 1 ? "one wiring" : kept.length + " wirings"} after ${brain.rewired} regrowths: ` +
+        b.tiles.map(t => PLACE[t]).join(", ") + ".";
+    el.textContent = "";
+    if (!b || b.cw.length < 2) return;
+    const r = WL.rule(b); if (!r) return;
+    const h = b.tiles[b.tiles.length - 1];
+    for (const row of r.table) {
+      const div = document.createElement("div"); div.className = "row";
+      b.tiles.slice(0, -1).forEach((t, j) => { const c = document.createElement("canvas"); paintTile(c, t, CLEAN[t][row.given[j] > 0 ? 1 : 0]); div.append(c); if (j < b.tiles.length - 2) div.append("+"); });
+      div.append(" gives ");
+      const c = document.createElement("canvas"); paintTile(c, h, row.pixels); div.append(c);
+      el.append(div);
+    }
+    const note = document.createElement("p"); note.className = "small"; note.style.margin = "4px 0 0";
+    const pairs = r.pairs.map(p => (p[2] >= 0 ? "+" : "") + p[2].toFixed(2)).join(" and ");
+    note.textContent = r.triple === null ? `What one piece says about the other: ${pairs}.`
+      : `Each piece alone says ${pairs} about the third; the two together say ${(r.triple >= 0 ? "+" : "") + r.triple.toFixed(2)}.`;
+    el.append(note);
+  }
+  function verdict(el, brain, res, color) {
+    el.textContent = "";
+    if (!covered.length) { el.innerHTML = `<span class="word">Nothing covered</span><span class="small">Cover a piece to ask.</span>`; return; }
+    for (const t of covered) {
+      const r = res.tiles[t], div = document.createElement("div"); div.className = "tileverdict";
+      const name = r.pPlus >= 0.5 ? NAMES[WL.PAIRS[t][1]] : NAMES[WL.PAIRS[t][0]];
+      let word, why;
+      if (brain.seen === 0) { word = "No idea"; why = "It has not experienced anything."; }
+      else if (r.support < 0.05 && r.misfit > 2.5) { word = "Doesn't fit"; why = "Nothing it has learned explains what it sees."; }
+      else if (r.support < 0.05) { word = "No idea"; why = `No kept wiring links the ${PLACE[t]} to what is visible.`; }
+      else if (r.belief < 0.2) { word = "Can't tell"; why = "Its experience allows either."; }
+      else { word = name[0].toUpperCase() + name.slice(1); why = r.belief > 0.8 ? "Sure." : "Leaning this way."; }
+      const label = covered.length > 1 ? `<span class="small">${PLACE[t]}</span>` : "";
+      div.innerHTML = `${label}<span class="word">${word}</span><div class="meter" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(100 * r.belief)}" aria-label="Certainty"><i style="width:${(100 * r.belief).toFixed(0)}%"></i></div><span class="small">${(100 * r.belief).toFixed(0)}% certain. ${why}</span>`;
+      el.append(div);
+    }
+  }
+  function drawCurve() {
+    const c = $("curve"), dpr = window.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
+    if (c.width !== Math.round(W * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+    const ctx = c.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const L = 34, R = 8, T = 8, Bm = 22, maxX = Math.max(600, seenTotal);
+    const X = s => L + (W - L - R) * s / maxX, Y = a => T + (H - T - Bm) * (1 - a);
+    ctx.font = "12px Instrument Sans, system-ui"; ctx.fillStyle = css("--muted"); ctx.strokeStyle = css("--rule"); ctx.lineWidth = 1;
+    for (const a of [0, 0.5, 1]) { ctx.beginPath(); ctx.moveTo(L, Y(a)); ctx.lineTo(W - R, Y(a)); ctx.stroke(); ctx.fillText(Math.round(a * 100) + "%", 2, Y(a) + 4); }
+    ctx.fillText("experiences", W - R - 70, H - 4); ctx.fillText(maxX.toLocaleString(), W - R - 140, H - 4);
+    let lastEnd = -1e9, lane = 0;                       // labels close together step down a line
+    for (const e of events) {
+      const x = X(e.at); ctx.strokeStyle = css("--muted"); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, H - Bm); ctx.stroke(); ctx.setLineDash([]);
+      lane = x + 4 < lastEnd ? (lane + 1) % 3 : 0; ctx.fillText(e.label, x + 4, T + 12 + 14 * lane); lastEnd = Math.max(lastEnd, x + 8 + ctx.measureText(e.label).width);
+    }
+    const line = (key, color, dash) => {
+      ctx.strokeStyle = color; ctx.lineWidth = 2.2; ctx.setLineDash(dash || []); ctx.beginPath();
+      history.forEach((h, i) => { const x = X(h.at), y = Y(h[key]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.setLineDash([]);
+    };
+    line("l", css("--muted"), [5, 4]); line("a", css("--a")); line("b", css("--b"));
+  }
+
+  // ---------- the loop ----------
+  function evaluateNow() {
+    if (!A.seen && !B.seen) return;
+    const n = 60, s = 1000 + history.length;
+    const pt = { at: seenTotal, a: WL.evaluate(A, aWorld, n, s), b: WL.evaluate(B, "B", n, s + 1),
+                 l: (WL.evaluate(A, aWorld, n, s + 2, "lin") + WL.evaluate(B, "B", n, s + 3, "lin")) / 2 };
+    history.push(pt); if (history.length > 600) history.shift();
+    $("acc-a").textContent = Math.round(100 * pt.a) + "%"; $("acc-b").textContent = Math.round(100 * pt.b) + "%"; $("acc-l").textContent = Math.round(100 * pt.l) + "%";
+  }
+  function step(n) {
+    const ua = step.ua || (step.ua = WL.rng(4242)), ub = step.ub || (step.ub = WL.rng(4343));
+    for (let i = 0; i < n; i++) {
+      lastA = WL.render(WL.sampleStates(aWorld, ua), ua); WL.learn(A, lastA);
+      lastB = WL.render(WL.sampleStates("B", ub), ub); WL.learn(B, lastB);
+      seenTotal++;
+    }
+  }
+  function render() {
+    const x = sceneImg(), rev = revealMask();
+    paint($("scene"), x, { covered, reveal: rev, grid: true });
+    const ra = WL.infer(A, x, covered, rev), rb = WL.infer(B, x, covered, rev);
+    paint($("a-out"), ra.img, { outline: css("--a"), outlineTiles: covered });
+    paint($("b-out"), rb.img, { outline: css("--b"), outlineTiles: covered });
+    paint($("la-out"), WL.linFill(A, x, covered), { outline: css("--muted"), outlineTiles: covered });
+    paint($("lb-out"), WL.linFill(B, x, covered), { outline: css("--muted"), outlineTiles: covered });
+    verdict($("a-verdict"), A, ra, css("--a")); verdict($("b-verdict"), B, rb, css("--b"));
+    drawWires($("a-wires"), A, css("--a")); drawWires($("b-wires"), B, css("--b"));
+    drawRule($("a-rule"), $("a-wiretext"), A); drawRule($("b-rule"), $("b-wiretext"), B);
+    if (lastA) { paint($("a-feed"), lastA); $("a-feedtext").textContent = `${A.seen.toLocaleString()} experiences of world ${aWorld}${A.hide.length ? ", mouths always hidden" : ""}.`; }
+    else $("a-feedtext").textContent = "Waiting for its first experience.";
+    if (lastB) { paint($("b-feed"), lastB); $("b-feedtext").textContent = `${B.seen.toLocaleString()} experiences of world B${B.hide.length ? ", mouths always hidden" : ""}.`; }
+    else $("b-feedtext").textContent = "Waiting for its first experience.";
+    $("a-sub").textContent = aWorld === "A" ? "Lives in world A: matching eyes, smile." : "Moved into world B: matching eyes, frown.";
+    // what is really under the covers, and whose rule the scene follows
+    const follows = states[WL.MOUTH] === states[WL.EYE_L] * states[WL.EYE_R] ? "A" : "B";
+    $("truth").textContent = (covered.length ? "Under the covers: " + covered.map(t => `${NAMES[WL.PAIRS[t][states[t] > 0 ? 1 : 0]]} (${PLACE[t]})`).join(", ") + ". " : "")
+      + `This face follows world ${follows}'s rule.`;
+    $("peeklabel").textContent = covered.includes(WL.MOUTH) ? "Peek under the mouth's cover" : "Peek under the covers";
+    $("peekval").textContent = !covered.length ? "nothing is covered" : +$("peek").value ? $("peek").value + "% of its pixels" : "nothing yet";
+    $("runinfo").textContent = seenTotal ? `${seenTotal.toLocaleString()} experiences each.` : "Neither learner has seen anything yet.";
+    drawCurve();
+  }
+  let dirty = true;
+  function frame(now) {
+    if (running) { step(+$("speed").value); dirty = true; if (now - lastEval > 700) { evaluateNow(); lastEval = now; } }
+    if (dirty) { render(); dirty = false; }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- interaction ----------
+  const mark = label => { events.push({ at: seenTotal, label }); if (A.seen || B.seen) evaluateNow(); dirty = true; };
+  $("run").onclick = () => { running = !running; $("run").textContent = running ? "Pause" : (seenTotal ? "Continue experience" : "Start experience"); };
+  $("speed").oninput = () => {};
+  function setMode(m) { mode = m; $("mode-change").setAttribute("aria-pressed", m === "change"); $("mode-cover").setAttribute("aria-pressed", m === "cover"); }
+  $("mode-change").onclick = () => setMode("change"); $("mode-cover").onclick = () => setMode("cover");
+  function tileAt(ev) { const r = $("scene").getBoundingClientRect(); const c = Math.min(2, Math.floor(3 * (ev.clientX - r.left) / r.width)), rr = Math.min(2, Math.floor(3 * (ev.clientY - r.top) / r.height)); return rr * 3 + c; }
+  function act(t) {
+    if (mode === "cover") covered = covered.includes(t) ? covered.filter(q => q !== t) : [...covered, t].sort((a, b) => a - b);
+    else states[t] = -states[t];
+    dirty = true;
+  }
+  $("scene").addEventListener("click", ev => act(tileAt(ev)));
+  let kbTile = 4;
+  $("scene").addEventListener("keydown", ev => {
+    const mv = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -3, ArrowDown: 3 }[ev.key];
+    if (mv !== undefined) { const n = kbTile + mv; if (n >= 0 && n < 9 && !(Math.abs(mv) === 1 && Math.floor(n / 3) !== Math.floor(kbTile / 3))) kbTile = n; $("scene").setAttribute("aria-label", `Selected: ${PLACE[kbTile]}. Press Enter to ${mode === "cover" ? "cover or uncover" : "change"} it.`); ev.preventDefault(); }
+    if (ev.key === "Enter" || ev.key === " ") { act(kbTile); ev.preventDefault(); }
+  });
+  $("cover-mouth").onclick = () => { covered = [WL.MOUTH]; dirty = true; };
+  $("cover-eyemouth").onclick = () => { covered = [WL.EYE_R, WL.MOUTH]; dirty = true; };
+  $("newscene").onclick = () => {
+    const u = WL.rng((Math.random() * 1e9) | 0); states = states.map(() => (u() < 0.5 ? -1 : 1));
+    sceneSeed = (Math.random() * 1e6) | 0; newPeekOrder(); $("peek").value = 0; dirty = true;
+  };
+  $("peek").oninput = () => { dirty = true; };
+  $("erase").onclick = () => { WL.erase(A); WL.erase(B); lastA = lastB = null; mark("erased"); };
+  $("cut").onclick = () => { WL.cutLinks(A); WL.cutLinks(B); mark("links cut"); };
+  $("swap").onclick = () => {
+    aWorld = aWorld === "A" ? "B" : "A";
+    $("swap").setAttribute("aria-pressed", aWorld === "B"); $("swap").textContent = aWorld === "B" ? "Move learner A back to world A" : "Move learner A into world B";
+    mark(aWorld === "B" ? "A moved to B" : "A back in A");
+  };
+  $("hidemouth").onchange = () => { A.hide = B.hide = $("hidemouth").checked ? [WL.MOUTH] : []; mark($("hidemouth").checked ? "mouths hidden" : "mouths shown"); };
+  $("reset").onclick = () => { fresh(); dirty = true; };
+  window.addEventListener("resize", () => { dirty = true; });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { dirty = true; });
+
+  fresh();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
