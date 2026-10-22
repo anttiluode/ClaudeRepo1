@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Living Paper</title>
+<meta name="description" content="A webcam toy: a hole in the view is filled from a remembered, motion-carried image that checks itself against the present.">
+<style>
+  :root {
+    --bg: #f6f4ef; --panel: #ffffff; --ink: #1d1f22; --muted: #5d636b; --line: #dedad2;
+    --accent: #d8642c; --accent-ink: #ffffff; --good: #2f7d5b; --bad: #b5402d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141518; --panel: #1d1f23; --ink: #ecebe7; --muted: #a2a6ad; --line: #30333a;
+      --accent: #f08a4b; --accent-ink: #141518; --good: #6cc59a; --bad: #f08a72;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141518; --panel: #1d1f23; --ink: #ecebe7; --muted: #a2a6ad; --line: #30333a;
+    --accent: #f08a4b; --accent-ink: #141518; --good: #6cc59a; --bad: #f08a72;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
+  .lede { color: var(--muted); margin: 0 0 18px; max-width: 760px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+           padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 6px; background: #000; image-rendering: auto; }
+  #view { cursor: grab; touch-action: none; }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 18px;
+              background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+  label { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+  label.row { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .stats { font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); margin-top: 10px; }
+  .stats span { color: var(--ink); }
+  .note { font-size: 13px; color: var(--muted); margin-top: 18px; max-width: 820px; }
+  .note h2 { font-size: 15px; color: var(--ink); margin: 14px 0 4px; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--line); }
+  .ok { color: var(--good); } .no { color: var(--bad); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Living Paper</h1>
+  <p class="lede">A hole sits in the middle of the view. Move the camera slowly: the hole fills from a
+  <b>remembered image that is carried with the motion</b>. Before it is believed, the memory is checked
+  against what is visible right now. Point the camera somewhere else, or inject a stored memory of
+  another place, and watch the trust drop to zero. From
+  <a href="https://github.com/anttiluode/SihtiImageModel5">SihtiImageModel5</a>.</p>
+
+  <div class="bar">
+    <button class="primary" id="btnCam">Start camera</button>
+    <button id="btnDemo">Demo (no camera)</button>
+    <button id="btnReset">Forget everything</button>
+    <button id="btnStore">Store this memory</button>
+    <button id="btnInject" disabled>Inject stored memory</button>
+    <button id="btnCut" disabled>Jump to another place (demo)</button>
+    <span id="status" class="pill">idle</span>
+  </div>
+
+  <div class="grid">
+    <figure><canvas id="view" width="128" height="96"></canvas>
+      <figcaption><b>What it sees.</b> The grey box is the occluder. Drag it.</figcaption></figure>
+    <figure><canvas id="alone" width="128" height="96"></canvas>
+      <figcaption><b>This frame only.</b> Smooth guess from the edges of the hole.</figcaption></figure>
+    <figure><canvas id="paper" width="128" height="96"></canvas>
+      <figcaption><b>Living paper.</b> Memory inside the same fill energy, weighted by trust.</figcaption></figure>
+    <figure><canvas id="trust" width="128" height="96"></canvas>
+      <figcaption><b>Memory held × trust.</b> Bright: remembered and believed. Dark: unknown or rejected.</figcaption></figure>
+  </div>
+
+  <div class="stats" id="stats">waiting for frames…</div>
+
+  <div class="controls">
+    <label>Occluder size <input type="range" id="size" min="12" max="56" value="34"></label>
+    <label>Memory kept per frame (ρ) <input type="range" id="rho" min="0.90" max="1.0" step="0.005" value="0.985"></label>
+    <label>Sensor noise σ (for the trust check) <input type="range" id="sigma" min="0.01" max="0.10" step="0.005" value="0.035"></label>
+    <label>Evidence discount κ <input type="range" id="kappa" min="2" max="64" step="1" value="12"></label>
+    <label class="row"><input type="checkbox" id="check" checked> Check memory against the present</label>
+    <label class="row"><input type="checkbox" id="theme"> Dark / light</label>
+  </div>
+
+  <div class="note">
+    <h2>What is going on</h2>
+    Each frame the page estimates how the whole view moved (an integer shift, from pixels visible in both
+    frames), carries its remembered image <i>m</i> and its per-pixel confidence <i>π</i> along with that motion,
+    and fills the hole by minimising one energy: smoothness between neighbouring pixels plus
+    β·trust·π·(x − m)². Only real observations add confidence; filled-in pixels never do, so the paper
+    cannot learn from its own guesses.
+    <h2>The check</h2>
+    On visible pixels the carried memory makes a prediction. Each prediction error is scored by how expected
+    it is under "this memory is of this scene" versus "unrelated", pooled near each pixel and over the frame:
+    trust = P(same | nearby errors) · P(same | all errors). A memory of somewhere else is switched off; the
+    hole falls back to the plain guess.
+    <h2>Honest limits</h2>
+    This is a simplified browser version. It uses a smoothness prior instead of Model 5's learned patch
+    mixture, handles only sideways/up-down camera motion (not rotation, zoom or moving objects), and the
+    trust pooling constants are tuned for live video by hand. If the world changes only behind the occluder,
+    nothing visible can reveal it, and the paper will paint the old content. Everything runs locally; no
+    video leaves your browser.
+  </div>
+</main>
+
+<script>
+// CORE-BEGIN  (pure functions, no DOM; tested with node in tests/test_index_core.mjs)
+const LP = (() => {
+  const W = 128, H = 96, N = W * H;
+
+  function gray(rgb, out) {
+    for (let i = 0; i < N; i++) out[i] = 0.299 * rgb[3 * i] + 0.587 * rgb[3 * i + 1] + 0.114 * rgb[3 * i + 2];
+    return out;
+  }
+
+  // cur(r, c) ~ prev(r + sy, c + sx); only pixels visible in both frames vote.
+  function estimateShift(prev, prevMask, cur, curMask, R = 6, step = 2) {
+    let best = [0, 0], bestErr = Infinity;
+    for (let sy = -R; sy <= R; sy++) for (let sx = -R; sx <= R; sx++) {
+      let s = 0, n = 0;
+      for (let r = Math.max(0, -sy); r < Math.min(H, H - sy); r += step) {
+        const pr = r + sy;
+        for (let c = Math.max(0, -sx); c < Math.min(W, W - sx); c += step) {
+          const i = r * W + c, j = pr * W + c + sx;
+          if (!curMask[i] || !prevMask[j]) continue;
+          const d = cur[i] - prev[j]; s += d * d; n++;
+        }
+      }
+      if (n < 300) continue;
+      const e = s / n + 1e-7 * (sy * sy + sx * sx);   // tiny preference for small shifts on ties
+      if (e < bestErr) { bestErr = e; best = [sy, sx]; }
+    }
+    return { shift: best, err: bestErr };
+  }
+
+  function shift(src, ch, sy, sx, out, fill = 0) {
+    out.fill(fill);
+    for (let r = 0; r < H; r++) {
+      const pr = r + sy; if (pr < 0 || pr >= H) continue;
+      for (let c = 0; c < W; c++) {
+        const pc = c + sx; if (pc < 0 || pc >= W) continue;
+        for (let k = 0; k < ch; k++) out[(r * W + c) * ch + k] = src[(pr * W + pc) * ch + k];
+      }
+    }
+    return out;
+  }
+
+  function boxMean(a, rad, out, tmp) {           // separable box filter, zero outside
+    const w = 2 * rad + 1;
+    for (let r = 0; r < H; r++) {
+      let s = 0;
+      for (let c = -rad; c <= rad; c++) if (c >= 0 && c < W) s += a[r * W + c];
+      for (let c = 0; c < W; c++) {
+        tmp[r * W + c] = s / w;
+        const add = c + rad + 1, rem = c - rad;
+        if (add < W) s += a[r * W + add];
+        if (rem >= 0) s -= a[r * W + rem];
+      }
+    }
+    for (let c = 0; c < W; c++) {
+      let s = 0;
+      for (let r = -rad; r <= rad; r++) if (r >= 0 && r < H) s += tmp[r * W + c];
+      for (let r = 0; r < H; r++) {
+        out[r * W + c] = s / w;
+        const add = r + rad + 1, rem = r - rad;
+        if (add < H) s += tmp[add * W + c];
+        if (rem >= 0) s -= tmp[rem * W + c];
+      }
+    }
+    return out;
+  }
+
+  const sig = z => 1 / (1 + Math.exp(-Math.max(-60, Math.min(60, z))));
+
+  function makePaper() {
+    return { m: new Float32Array(3 * N), pi: new Float32Array(N), prevY: null, prevMask: null,
+             mT: new Float32Array(3 * N), piT: new Float32Array(N), trust: new Float32Array(N),
+             llr: new Float32Array(N), loc: new Float32Array(N), tmp: new Float32Array(N),
+             mY: new Float32Array(N), lastShift: [0, 0], globalTrust: 1 };
+  }
+
+  // Carry the paper to this frame and score how believable it is.
+  function predict(P, obs, obsY, mask, prm) {
+    if (!P.prevY) { P.mT.fill(0); P.piT.fill(0); P.trust.fill(1); P.globalTrust = 1; P.lastShift = [0, 0]; return; }
+    const { shift: s } = estimateShift(P.prevY, P.prevMask, obsY, mask, prm.R ?? 6);
+    P.lastShift = s;
+    shift(P.m, 3, s[0], s[1], P.mT);
+    shift(P.pi, 1, s[0], s[1], P.piT);
+    for (let i = 0; i < N; i++) P.piT[i] *= prm.rho;
+    if (!prm.check) { P.trust.fill(1); P.globalTrust = 1; return; }
+    gray(P.mT, P.mY);
+    // scene variance on visible pixels
+    let s1 = 0, s2 = 0, nv = 0;
+    for (let i = 0; i < N; i++) if (mask[i]) { s1 += obsY[i]; s2 += obsY[i] * obsY[i]; nv++; }
+    const vs = Math.max(s2 / nv - (s1 / nv) ** 2, 1e-6);
+    const sg2 = prm.sigma * prm.sigma, vDiff = 2 * vs + sg2;
+    let sum = 0, cnt = 0;
+    for (let i = 0; i < N; i++) {
+      if (mask[i] && P.piT[i] > 0.05) {
+        const e = obsY[i] - P.mY[i], e2 = e * e;
+        const vSame = sg2 * (1 + 1 / P.piT[i]) + prm.slack * sg2;
+        let l = 0.5 * (Math.log(vDiff / vSame) + e2 / vDiff - e2 / vSame);
+        l = Math.max(-8, Math.min(4, l));
+        P.llr[i] = l; sum += l; cnt++;
+      } else P.llr[i] = 0;
+    }
+    const rad = prm.rad ?? 5, area = (2 * rad + 1) ** 2;
+    boxMean(P.llr, rad, P.loc, P.tmp);
+    const g = cnt ? sig((sum / cnt) * (prm.nEff ?? 200) / prm.kappa) : 1;
+    P.globalTrust = g;
+    for (let i = 0; i < N; i++) P.trust[i] = sig(P.loc[i] * area / prm.kappa) * g;
+  }
+
+  // One energy: sum of squared neighbour differences + w_i (x_i - m_i)^2, visible pixels clamped.
+  // Jacobi sweeps over the hidden pixels only; x holds the starting guess and the result.
+  function fill(obs, mask, x, m, w, iters, hidden) {
+    for (let i = 0; i < N; i++) if (mask[i]) { x[3*i] = obs[3*i]; x[3*i+1] = obs[3*i+1]; x[3*i+2] = obs[3*i+2]; }
+    for (let it = 0; it < iters; it++) {
+      for (const i of hidden) {
+        const r = (i / W) | 0, c = i - r * W;
+        let n = 0, a0 = 0, a1 = 0, a2 = 0;
+        if (c > 0)     { const j = 3*(i-1); a0 += x[j]; a1 += x[j+1]; a2 += x[j+2]; n++; }
+        if (c < W - 1) { const j = 3*(i+1); a0 += x[j]; a1 += x[j+1]; a2 += x[j+2]; n++; }
+        if (r > 0)     { const j = 3*(i-W); a0 += x[j]; a1 += x[j+1]; a2 += x[j+2]; n++; }
+        if (r < H - 1) { const j = 3*(i+W); a0 += x[j]; a1 += x[j+1]; a2 += x[j+2]; n++; }
+        const wi = w ? w[i] : 0, d = n + wi;
+        x[3*i]   = (a0 + wi * m[3*i])   / d;
+        x[3*i+1] = (a1 + wi * m[3*i+1]) / d;
+        x[3*i+2] = (a2 + wi * m[3*i+2]) / d;
+      }
+    }
+    return x;
+  }
+
+  // Only observations add confidence. Visible: fuse; hidden: take the fill, keep carried confidence.
+  function update(P, obs, obsY, mask, x, piCap) {
+    for (let i = 0; i < N; i++) {
+      if (mask[i]) {
+        const p = P.piT[i], q = p + 1;
+        for (let k = 0; k < 3; k++) P.m[3*i+k] = (p * P.mT[3*i+k] + obs[3*i+k]) / q;
+        P.pi[i] = Math.min(q, piCap);
+      } else {
+        for (let k = 0; k < 3; k++) P.m[3*i+k] = x[3*i+k];
+        P.pi[i] = P.piT[i];
+      }
+    }
+    P.prevY = Float32Array.from(obsY); P.prevMask = Uint8Array.from(mask);
+  }
+
+  return { W, H, N, gray, estimateShift, shift, boxMean, makePaper, predict, fill, update };
+})();
+if (typeof module !== "undefined") module.exports = LP;
+// CORE-END
+</script>
+
+<script>
+(() => {
+  const { W, H, N } = LP;
+  const $ = id => document.getElementById(id);
+  const ctx = id => $(id).getContext("2d", { willReadFrequently: true });
+  const cView = ctx("view"), cAlone = ctx("alone"), cPaper = ctx("paper"), cTrust = ctx("trust");
+  const grab = document.createElement("canvas"); grab.width = W; grab.height = H;
+  const gctx = grab.getContext("2d", { willReadFrequently: true });
+
+  const obs = new Float32Array(3 * N), obsY = new Float32Array(N), mask = new Uint8Array(N);
+  const xPaper = new Float32Array(3 * N), xAlone = new Float32Array(3 * N), wMem = new Float32Array(N);
+  let P = LP.makePaper(), stored = null, hidden = [];
+  let occ = { x: (W - 34) / 2 | 0, y: (H - 34) / 2 | 0, s: 34 };
+  let source = null, video = null, running = false, frames = 0, tLast = performance.now(), fps = 0;
+
+  // ---------- demo world: a procedural scene, viewed through a moving window
+  const world = document.createElement("canvas"); world.width = 420; world.height = 300;
+  (function paintWorld() {
+    const g = world.getContext("2d");
+    const sky = g.createLinearGradient(0, 0, 0, 300); sky.addColorStop(0, "#7fb2d9"); sky.addColorStop(1, "#e9d8b4");
+    g.fillStyle = sky; g.fillRect(0, 0, 420, 300);
+    const rnd = (a => () => (a = (a * 1664525 + 1013904223) >>> 0) / 4294967296)(7);
+    for (let i = 0; i < 26; i++) {
+      g.fillStyle = `hsl(${rnd() * 360 | 0},${40 + rnd() * 40 | 0}%,${30 + rnd() * 40 | 0}%)`;
+      const x = rnd() * 420, y = rnd() * 300, r = 6 + rnd() * 28;
+      if (i % 3) { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); } else g.fillRect(x, y, r * 1.6, r);
+    }
+    g.strokeStyle = "#222"; g.lineWidth = 2;
+    for (let x = 0; x < 420; x += 14) { g.beginPath(); g.moveTo(x, 230); g.lineTo(x + 30, 300); g.stroke(); }
+    g.fillStyle = "#1d1f22"; g.font = "bold 28px system-ui, sans-serif"; g.fillText("PerceptionLab", 120, 160);
+    g.font = "16px system-ui, sans-serif"; g.fillText("living paper  ·  sihti", 150, 186);
+  })();
+  let demoT = 0, demoJump = 0;
+  function demoFrame() {
+    demoT += 1;
+    const cx = 146 + Math.round(120 * Math.sin(demoT / 70) + demoJump), cy = 102 + Math.round(70 * Math.sin(demoT / 53));
+    const x0 = Math.max(0, Math.min(420 - W, cx - W / 2)), y0 = Math.max(0, Math.min(300 - H, cy - H / 2));
+    gctx.drawImage(world, x0, y0, W, H, 0, 0, W, H);
+  }
+
+  // ---------- occluder
+  function rebuildMask() {
+    mask.fill(1); hidden = [];
+    for (let r = occ.y; r < occ.y + occ.s; r++) for (let c = occ.x; c < occ.x + occ.s; c++) {
+      if (r < 0 || r >= H || c < 0 || c >= W) continue;
+      mask[r * W + c] = 0; hidden.push(r * W + c);
+    }
+  }
+  rebuildMask();
+  let drag = null;
+  const toWork = e => { const b = $("view").getBoundingClientRect(); return [(e.clientX - b.left) / b.width * W, (e.clientY - b.top) / b.height * H]; };
+  $("view").addEventListener("pointerdown", e => { const [x, y] = toWork(e); drag = [x - occ.x, y - occ.y]; $("view").setPointerCapture(e.pointerId); });
+  $("view").addEventListener("pointermove", e => { if (!drag) return; const [x, y] = toWork(e);
+    occ.x = Math.round(Math.max(0, Math.min(W - occ.s, x - drag[0]))); occ.y = Math.round(Math.max(0, Math.min(H - occ.s, y - drag[1]))); rebuildMask(); });
+  $("view").addEventListener("pointerup", () => drag = null);
+  $("size").addEventListener("input", e => { const s = +e.target.value; occ.x += (occ.s - s) >> 1; occ.y += (occ.s - s) >> 1; occ.s = s;
+    occ.x = Math.max(0, Math.min(W - s, occ.x)); occ.y = Math.max(0, Math.min(H - s, occ.y)); rebuildMask(); });
+
+  // ---------- drawing
+  const img = new ImageData(W, H);
+  function draw(c, rgb, maskGrey) {
+    const d = img.data;
+    for (let i = 0; i < N; i++) {
+      const g = maskGrey && !mask[i];
+      d[4*i]   = g ? 128 : Math.max(0, Math.min(255, rgb[3*i] * 255));
+      d[4*i+1] = g ? 128 : Math.max(0, Math.min(255, rgb[3*i+1] * 255));
+      d[4*i+2] = g ? 128 : Math.max(0, Math.min(255, rgb[3*i+2] * 255));
+      d[4*i+3] = 255;
+    }
+    c.putImageData(img, 0, 0);
+  }
+  function drawHeat(c, val, maxv) {
+    const d = img.data;
+    for (let i = 0; i < N; i++) {
+      const t = Math.max(0, Math.min(1, val[i] / maxv));
+      d[4*i] = 255 * Math.min(1, 1.6 * t); d[4*i+1] = 255 * Math.max(0, 1.6 * t - .6); d[4*i+2] = 255 * Math.max(0, 2 * t - 1.2) + 40 * (1 - t);
+      d[4*i+3] = 255;
+    }
+    c.putImageData(img, 0, 0);
+    c.strokeStyle = "#ffffff"; c.lineWidth = 1; c.strokeRect(occ.x + .5, occ.y + .5, occ.s - 1, occ.s - 1);
+  }
+
+  // ---------- one step
+  function step() {
+    if (!running) return;
+    if (source === "demo") demoFrame(); else if (video && video.readyState >= 2) gctx.drawImage(video, 0, 0, W, H); else { requestAnimationFrame(step); return; }
+    const px = gctx.getImageData(0, 0, W, H).data;
+    for (let i = 0; i < N; i++) {
+      const n = source === "demo" ? (Math.random() - .5) * .04 : 0;
+      obs[3*i] = px[4*i] / 255 + n; obs[3*i+1] = px[4*i+1] / 255 + n; obs[3*i+2] = px[4*i+2] / 255 + n;
+    }
+    LP.gray(obs, obsY);
+    const prm = { rho: +$("rho").value, sigma: +$("sigma").value, kappa: +$("kappa").value,
+                  check: $("check").checked, slack: 3, R: 6 };
+    LP.predict(P, obs, obsY, mask, prm);
+    const beta = 3;
+    for (let i = 0; i < N; i++) wMem[i] = beta * P.piT[i] * P.trust[i];
+    // start each fill from the carried memory where it is believed, else from last output
+    for (const i of hidden) if (wMem[i] > 0.5) for (let k = 0; k < 3; k++) xPaper[3*i+k] = P.mT[3*i+k];
+    LP.fill(obs, mask, xPaper, P.mT, wMem, 60, hidden);
+    LP.fill(obs, mask, xAlone, P.mT, null, 60, hidden);
+    LP.update(P, obs, obsY, mask, xPaper, 40);
+
+    draw(cView, obs, true); draw(cAlone, xAlone); draw(cPaper, xPaper);
+    const held = new Float32Array(N); for (let i = 0; i < N; i++) held[i] = P.piT[i] * P.trust[i];
+    drawHeat(cTrust, held, 12);
+
+    let tH = 0, mH = 0; for (const i of hidden) { tH += P.trust[i]; mH += wMem[i] / (wMem[i] + 4); }
+    frames++; const now = performance.now(); if (now - tLast > 500) { fps = frames * 1000 / (now - tLast); frames = 0; tLast = now; }
+    $("stats").innerHTML = `motion <span>${P.lastShift[1]}, ${P.lastShift[0]}</span> px · trust (whole view) <span>${P.globalTrust.toFixed(2)}</span>` +
+      ` · trust in hole <span>${(tH / hidden.length).toFixed(2)}</span> · hole set by memory <span>${(100 * mH / hidden.length).toFixed(0)}%</span> · <span>${fps.toFixed(0)}</span> fps`;
+    requestAnimationFrame(step);
+  }
+
+  function start(kind) {
+    source = kind; running = true; P = LP.makePaper(); xPaper.fill(.5); xAlone.fill(.5);
+    $("status").textContent = kind === "demo" ? "demo scene" : "camera"; $("btnCut").disabled = kind !== "demo";
+    requestAnimationFrame(step);
+  }
+  $("btnCam").onclick = async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+      video = document.createElement("video"); video.srcObject = s; video.muted = true; video.playsInline = true; await video.play();
+      start("camera");
+    } catch (e) { $("status").textContent = "no camera: " + e.name + " — try the demo"; }
+  };
+  $("btnDemo").onclick = () => start("demo");
+  $("btnReset").onclick = () => { P = LP.makePaper(); };
+  $("btnStore").onclick = () => { stored = { m: Float32Array.from(P.m), pi: Float32Array.from(P.pi), prevY: P.prevY && Float32Array.from(P.prevY), prevMask: P.prevMask && Uint8Array.from(P.prevMask) }; $("btnInject").disabled = false; };
+  $("btnInject").onclick = () => { if (!stored) return; P.m.set(stored.m); P.pi.set(stored.pi); if (stored.prevY) { P.prevY = Float32Array.from(stored.prevY); P.prevMask = Uint8Array.from(stored.prevMask); } };
+  $("btnCut").onclick = () => { demoJump = demoJump ? 0 : 150; };
+  $("theme").addEventListener("change", e => {
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = e.target.checked ? (dark ? "light" : "dark") : "";
+  });
+  draw(cView, new Float32Array(3 * N).fill(.12), true);
+})();
+</script>
+</body>
+</html>

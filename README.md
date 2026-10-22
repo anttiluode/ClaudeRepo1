@@ -1,5 +1,12 @@
 # ClaudeRepo1 — which configurations across the Sihti bands occur together?
 
+> **Live toy:** [`index.html`](index.html) — *Living Paper*, the Model 5 idea in the browser: a webcam
+> view with an occluder, filled from a motion-carried memory that is checked against the present before
+> it is believed. Works with GitHub Pages (Settings → Pages → main, root). Simplified: smoothness prior
+> instead of Model 5's patch mixture, global translation only. Core logic tested with
+> `node tests/test_index_core.mjs` (memory fill 34× lower error than the plain fill on a synthetic pan;
+> foreign memory rejected, trust 0.00).
+
 > **Astra branch audit (22 October):** A2b's claim of two fresh source photographs
 > is withdrawn: `cat` aliases the training image `chelsea`. Original receipts below
 > are preserved, not rerun. The histogram/spectrum controls are approximate, not
