@@ -1,0 +1,19 @@
+{
+  "source_photos": [
+    "cell"
+  ],
+  "n": 100,
+  "note": "partial corrected-source receipt: cell only (eagle not downloadable in the sandbox); not the preregistered cell+eagle set",
+  "drive_auc": {
+    "rectified": {
+      "phase": 1.0,
+      "marginal": 0.9895,
+      "shuffle": 0.9135
+    },
+    "marginal": {
+      "phase": 1.0,
+      "marginal": 0.6692,
+      "shuffle": 0.847
+    }
+  }
+}

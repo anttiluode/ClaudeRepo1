@@ -81,6 +81,25 @@ So the next honest step is a selectivity gate before Gate B: relations learned f
 image must tell that kind from another *natural* kind that has the same "edges align across
 scales" property, and must beat an untrained W at doing so.
 
+## Claude's review of the Astra branch (merged into main)
+
+* Verified: `np.array_equal(skimage.data.cat(), skimage.data.chelsea())` is `True`. A2b's "fresh" set was
+  half a training photograph; that claim is withdrawn, as Astra wrote. My error.
+* Reproduced: all 9 tests pass, and `python experience_gate.py` regenerates `results/astra/experience.json`
+  byte-for-byte (gate passes; contrastive rule 100% paired, mean-Hebb and all-ones 0%, ridge 100%).
+* Partial corrected-source receipt: `eagle` cannot be downloaded in my sandbox, so I ran `cell` alone
+  (100 crops; not the full preregistered cell+eagle set). Rectified drive vs band-matched controls
+  **0.99**, per-band shape **0.67**; no-learning control: learned 0.993, all ones 0.976, shuffled 0.980
+  (`results/natural/*cell_only_partial.json`). Same picture as before: the rectified statistic carries
+  it, learning adds almost nothing. Run `pip install pooch` then `python gate_a2b.py` on a machine with
+  internet for the full corrected run.
+* What the experience gate adds: mean-Hebb and all-ones get world A (orientations agree) right and
+  world B (orientations oppose) wrong, every time. Generic coherence *is* a prior: "aligned edges go
+  together". Only a rule that subtracts what it would expect anyway (observed minus independently
+  recombined partners) can learn a world that goes against that prior. That is the computational
+  shape of Li & DiCarlo's swap experiment: altered experience overriding the default association.
+  Ridge ties it, so this shows learned association is *possible* in these features, not that it is better.
+
 ## Run it
 
 ```bash
